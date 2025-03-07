@@ -115,14 +115,6 @@ def filter_swaps(
     blacklisted_tokens = blacklisted_tokens or []
 
     def _filter(swap):
-        # utc_tz = pytz.timezone('UTC')
-        # iso_string = swap['block_timestamp']
-        # iso_string = iso_string.replace("Z", "+00:00")
-        # swap_datetime = datetime.fromisoformat(iso_string)
-        # _trashhold = "2025-01-15 00:00:00"
-        # trashhold = utc_tz.localize(datetime.strptime(_trashhold, "%Y-%m-%d %H:%M:%S"))
-        # if swap_datetime < trashhold:
-        #     return False
         swap_from_mint = swap.get("swap_from_mint")
         swap_to_mint = swap.get("swap_to_mint")
         if not (swap_from_mint == SOL_ADDRESS or swap_to_mint == SOL_ADDRESS):
