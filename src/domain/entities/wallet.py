@@ -5,19 +5,9 @@ from typing import Optional
 from uuid import UUID
 
 from mashumaro import DataClassDictMixin
-from mashumaro.config import BaseConfig
-from mashumaro.types import SerializationStrategy
 
 from src.domain.entities.base_entity import BaseEntity, TimestampMixinEntity
 
-
-class TsSerializationStrategy(SerializationStrategy, use_annotations=False):
-    def serialize(self, value: datetime) -> datetime:
-        return value
-
-    # def deserialize(self, value: float) -> datetime:
-    #     # value will be converted to float before being passed to this method
-    #     return datetime.fromtimestamp(value)
 
 
 @dataclass
@@ -45,12 +35,6 @@ class WalletEntity(DataClassDictMixin, BaseEntity, TimestampMixinEntity):
         return self.last_stats_check < self.last_activity_timestamp + timedelta(
             minutes=10
         )
-
-    class Config:
-        serialization_strategy = {
-            datetime: TsSerializationStrategy(),
-        }
-
 
 @dataclass
 class WalletDetailEntity(BaseEntity, TimestampMixinEntity):
