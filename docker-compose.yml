@@ -1,0 +1,45 @@
+networks:
+  dev:
+
+services:
+  db:
+    image: postgres:13
+    shm_size: 4g
+    container_name: postgres-ddd
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${BACKEND__DB__NAME}
+      POSTGRES_USER: ${BACKEND__DB__USER}
+      POSTGRES_PASSWORD: ${BACKEND__DB__PASSWORD}
+      PGDATA: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    networks:
+      - dev
+
+  backend:
+    build:
+      context: .
+    container_name: backend
+    env_file:
+      - ./.env
+    command: uvicorn src.presentation.api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    depends_on:
+      - db
+    networks:
+      - dev
+
+volumes:
+  postgres_data:
