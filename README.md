@@ -5,39 +5,6 @@
 │   │   ├── __init__.py
 │   │   ├── dto.py
 │   │   └── utils.py
-│   ├── etl
-│   │   ├── __init__.py
-│   │   ├── block_id_updater.py
-│   │   ├── sol_prices_collector.py
-│   │   ├── swaps_parser
-│   │   │   ├── __init__.py
-│   │   │   ├── calculations.py
-│   │   │   ├── config.py
-│   │   │   ├── db_utils.py
-│   │   │   ├── flipside_queries.py
-│   │   │   ├── logger.py
-│   │   │   ├── mappers.py
-│   │   │   ├── parser.py
-│   │   │   ├── rollback.py
-│   │   │   ├── run.py
-│   │   │   ├── tokens_blacklist.txt
-│   │   │   └── utils.py
-│   │   ├── swaps_parser(fast_unsafe)
-│   │   │   ├── __init__.py
-│   │   │   ├── config.py
-│   │   │   ├── db_utils.py
-│   │   │   ├── flipside_queries.py
-│   │   │   ├── logger.py
-│   │   │   ├── otkat.py
-│   │   │   ├── parser.py
-│   │   │   ├── run.py
-│   │   │   ├── tokens_blacklist.txt
-│   │   │   └── utils.py
-│   │   ├── tg_wallets_sender.py
-│   │   ├── tokens_metadata_parser.py
-│   │   ├── utils.py
-│   │   ├── wallet_statistic_buygt15k_update_manager.py
-│   │   └── wallet_statistic_update_manager.py
 │   ├── exceptions.py
 │   ├── interfaces
 │   │   ├── __init__.py
@@ -177,4 +144,5 @@
     ├── __init__.py
     ├── config.py
     └── logging.py
+
 ```

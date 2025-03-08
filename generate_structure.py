@@ -17,7 +17,8 @@ class FolderStructureGenerator:
             ".idea",
             ".pytest_cache",
             "postgres",
-            "migrations"
+            "migrations",
+            "etl"
         }
         self.excluded_files = excluded_files or {".DS_Store", ".gitignore"}
 
@@ -40,7 +41,7 @@ class FolderStructureGenerator:
 
 
 if __name__ == "__main__":
-    project_dir = r"C:\Python\Мои проекты\fastapi-ddd\src"  # Задайте корневую папку проекта
+    project_dir = "src"  # Задайте корневую папку проекта
     generator = FolderStructureGenerator()
     tree_output = generator.generate_tree(project_dir)
 
