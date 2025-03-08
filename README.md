@@ -46,7 +46,6 @@ src/
 │   │   │   ├── common/
 │   │   │   ├── v1/
 │   │   │   │   ├── auth.py
-│   │   │   │   ├── test.py
 │   │   │   │   ├── user.py
 │   │   │   │   ├── wallet.py
 │   ├── schemas/
