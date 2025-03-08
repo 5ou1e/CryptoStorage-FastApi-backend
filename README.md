@@ -7,6 +7,7 @@ src/
 │   ├── interfaces/
 │   │   ├── repositories/
 │   │   │   └── uow.py
+│   ├── etl/
 │   ├── wallet/
 │   │   ├── dto/
 │   │   ├── queries/
