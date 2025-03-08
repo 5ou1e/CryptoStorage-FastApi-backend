@@ -8,7 +8,17 @@ class FolderStructureGenerator:
         excluded_dirs: Set[str] = None,
         excluded_files: Set[str] = None,
     ):
-        self.excluded_dirs = excluded_dirs or {"__pycache__", ".mypy_cache", ".git", ".venv", "venv", ".idea", ".pytest_cache"}
+        self.excluded_dirs = excluded_dirs or {
+            "__pycache__",
+            ".mypy_cache",
+            ".git",
+            ".venv",
+            "venv",
+            ".idea",
+            ".pytest_cache",
+            "postgres",
+            "migrations"
+        }
         self.excluded_files = excluded_files or {".DS_Store", ".gitignore"}
 
     def generate_tree(self, directory: str, prefix: str = "") -> List[str]:
@@ -30,7 +40,7 @@ class FolderStructureGenerator:
 
 
 if __name__ == "__main__":
-    project_dir = "src"  # Задайте корневую папку проекта
+    project_dir = r"C:\Python\Мои проекты\fastapi-ddd\src"  # Задайте корневую папку проекта
     generator = FolderStructureGenerator()
     tree_output = generator.generate_tree(project_dir)
 
