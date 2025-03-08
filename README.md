@@ -1,3 +1,4 @@
+```
 src/
 ├── application/
 │   ├── common/
@@ -55,3 +56,4 @@ src/
 │   │   ├── main.py
 │   │   ├── middlewares.py
 │   │   ├── routers.py
+```
