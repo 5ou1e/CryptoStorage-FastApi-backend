@@ -22,7 +22,7 @@ class FolderStructureGenerator:
         }
         self.excluded_files = excluded_files or {".DS_Store", ".gitignore"}
 
-    def generate_tree(self, directory: str, prefix: str = "") -> List[str]:
+    def generate(self, directory: str, prefix: str = "") -> List[str]:
         tree_lines = []
         entries = sorted(
             e for e in os.listdir(directory)
@@ -43,6 +43,6 @@ class FolderStructureGenerator:
 if __name__ == "__main__":
     project_dir = "src"  # Задайте корневую папку проекта
     generator = FolderStructureGenerator()
-    tree_output = generator.generate_tree(project_dir)
+    tree_output = generator.generate(project_dir)
 
     print("\n".join(tree_output))
