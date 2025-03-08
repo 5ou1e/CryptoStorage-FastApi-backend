@@ -70,7 +70,7 @@ async def process_wallet_tokens(
     for stats in wallet_tokens:
         mapped_data[stats.wallet_id]["tokens"][stats.token_id]["stats"] = stats
 
-    utils.recalculate_wallet_token_stats(mapped_data)
+    calculations.recalculate_wallet_token_stats(mapped_data)
     logger.info(f"WalletToken-статистики пересчитаны")
 
     wt_stats = [
@@ -103,7 +103,7 @@ async def import_data_to_db(swaps_all, swaps_jupiter, sol_prices, start_time, en
     logger.info("Кошельки импортированы")
     logger.info("Токены импортированы")
 
-    mapped_data = utils.map_data_by_wallets(created_wallets, created_tokens, activities)
+    mapped_data = mappers.map_data_by_wallets(created_wallets, created_tokens, activities)
 
     # После полуения кошельков из БД пересчитываем последн. активность и обновляем
     utils.calculate_last_wallet_activity_timestamps(
@@ -114,7 +114,7 @@ async def import_data_to_db(swaps_all, swaps_jupiter, sol_prices, start_time, en
     await db_utils.update_wallets(list(created_wallets.values()))
     logger.info("Кошельки обновлены")
 
-    token_wallet_list = utils.create_wallet_token_ids_list(activities)
+    token_wallet_list = mappers.create_wallet_token_ids_list(activities)
 
     results = await asyncio.gather(
         db_utils.import_activities(activities),

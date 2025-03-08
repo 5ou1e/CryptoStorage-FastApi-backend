@@ -1,10 +1,8 @@
 import uuid
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from typing import List, Tuple
-
-import pytz
 
 from src.infra.db.models.tortoise import (
     Swap,
@@ -19,19 +17,6 @@ from src.infra.db.models.tortoise import (
 
 from .config import SOL_ADDRESS
 from .logger import logger
-
-
-def create_wallet_token_ids_list(activities: list[Swap]):
-    result = []
-    unique_pairs = set()
-    for activity in activities:
-        pair = (activity.wallet_id, activity.token_id)
-        if pair not in unique_pairs:
-            unique_pairs.add(pair)
-            result.append(
-                {"wallet_id": activity.wallet_id, "token_id": activity.token_id}
-            )
-    return result
 
 
 def populate_swaps_data(mapped_swaps: dict):
@@ -90,19 +75,10 @@ def combine_swaps(swaps: list[dict], swaps_jupiter: list[dict]):
     populate_swaps_data(mapped_swaps)
     combined_swaps = [swap for _swaps in mapped_swaps.values() for swap in _swaps]
 
-    # bots = 0
-    # scammers = 0
-    # for swap in combined_swaps:
-    #     if swap.get('is_part_of_transaction_with_mt_3_swappers'):
-    #         scammers += 1
-    #     if swap.get('is_part_of_arbitrage_swap_event'):
-    #         bots += 1
-
     logger.debug(
         f"\nСвапов - Всего: {len(swaps)} | Юпитер: {len(swaps_jupiter)}"
         f"\nТранзакций - Всего: {len(mapped_swaps)} | Без юпитера: {len(mapped_swaps_all)} | Юпитер: {len(mapped_swaps_jupiter)}"
         f"\nСвапов суммарно: {len(combined_swaps)}"
-        # f"\nБот свапов: {bots} | Скам. свапов: {scammers}"\
     )
 
     return combined_swaps
@@ -201,127 +177,6 @@ def extract_and_build_objects(
     return wallets, tokens, activities
 
 
-def map_data_by_wallets(
-    wallets_map: dict, tokens_map: dict, activities: List[Swap]
-) -> dict:
-    """Маппинг данных по кошелькам"""
-
-    # {
-    #     wallet_id: {
-    #         'wallet': wallet_object,  # Объект кошелька
-    #         'tokens': {
-    #             token_id: {
-    #                 'token': token_object,  # Объект токена
-    #                 'activities': [activity_1, activity_2, ...],  # Список активностей для этого токена
-    #                 'stats': stats_object  # Статистика для токена (если есть)
-    #             },
-    #             ...
-    #         },
-    #     },
-    #     ...
-    # }
-    def default_token_structure():
-        return {
-            "token": None,
-            "activities": [],
-            "stats": None,
-        }  # Словарь с токеном и списком активностей
-
-    def default_wallet_structure():
-        return {"wallet": None, "tokens": defaultdict(default_token_structure)}
-
-    mapped_data = defaultdict(default_wallet_structure)
-
-    for activity in activities:
-        wallet = wallets_map[activity.wallet_address]
-        token = tokens_map[activity.token_address]
-        activity.wallet_id = wallet.id
-        activity.token_id = token.id
-        mapped_data[wallet.id]["wallet"] = wallet
-        mapped_data[wallet.id]["tokens"][token.id]["token"] = token
-        mapped_data[wallet.id]["tokens"][token.id]["activities"].append(activity)
-
-    return mapped_data
-
-
-def calculate_token_stats(token_data: dict) -> None:
-    """Пересчитывает статистику для связки кошелька с токеном"""
-    stats = token_data["stats"]
-    token_activities = token_data["activities"]
-
-    for activity in token_activities:
-        if activity.event_type == "buy":
-            stats.total_buys_count += 1
-            stats.total_buy_amount_usd += activity.cost_usd if activity.cost_usd else 0
-            stats.total_buy_amount_token += (
-                activity.token_amount if activity.token_amount else 0
-            )
-            if not stats.first_buy_timestamp or (
-                activity.timestamp <= stats.first_buy_timestamp
-            ):
-                stats.first_buy_timestamp = activity.timestamp
-                stats.first_buy_price_usd = activity.price_usd
-        else:
-            stats.total_sales_count += 1
-            stats.total_sell_amount_usd += activity.cost_usd if activity.cost_usd else 0
-            stats.total_sell_amount_token += (
-                activity.token_amount if activity.token_amount else 0
-            )
-            if not stats.first_sell_timestamp or (
-                activity.timestamp <= stats.first_sell_timestamp
-            ):
-                stats.first_sell_timestamp = activity.timestamp
-                stats.first_sell_price_usd = activity.price_usd
-
-        if not stats.last_activity_timestamp or (
-            activity.timestamp >= stats.last_activity_timestamp
-        ):
-            stats.last_activity_timestamp = activity.timestamp
-
-        if activity.is_part_of_transaction_with_mt_3_swappers:
-            stats.total_swaps_from_txs_with_mt_3_swappers += 1
-        if activity.is_part_of_arbitrage_swap_event:
-            stats.total_swaps_from_arbitrage_swap_events += 1
-
-    if (
-        stats.first_buy_timestamp
-        and stats.first_sell_timestamp
-        and (stats.first_buy_timestamp <= stats.first_sell_timestamp)
-    ):
-        stats.first_buy_sell_duration = (
-            stats.first_sell_timestamp - stats.first_buy_timestamp
-        )
-    if stats.total_buys_count > 0:
-        stats.total_profit_usd = (
-            stats.total_sell_amount_usd - stats.total_buy_amount_usd
-        )
-        stats.total_profit_percent = (
-            round(stats.total_profit_usd / stats.total_buy_amount_usd * 100, 2)
-            if not stats.total_buy_amount_usd == 0
-            else None
-        )
-
-    stats.updated_at = datetime.now(pytz.timezone("Europe/Moscow"))
-
-
-def recalculate_wallet_token_stats(wallets_dict):
-    new_count = 0
-    for wallet_data in wallets_dict.values():
-        wallet = wallet_data["wallet"]
-        tokens = wallet_data["tokens"]
-        for token_data in tokens.values():
-            token = token_data["token"]
-            stats = token_data["stats"]
-            # Создаем новый обьект токен-статистики если его не существует для токена
-            if not stats:
-                new_count += 1
-                stats = token_data["stats"] = WalletToken(
-                    token_id=token.id, wallet_id=wallet.id
-                )
-            calculate_token_stats(token_data)
-    logger.info(f"Новых токен-статс {new_count}")
-
-
 def split_time_range(start_time, end_time, parts):
     """Разбивает временной промежуток на равные части"""
     delta = (end_time - start_time) / parts
@@ -360,51 +215,3 @@ def create_wallets_relations(wallets):
     return wallet_details, wallet_stats_7d, wallet_stats_30d, wallet_stats_all
 
 
-def calculate_wallet_first_last_activity_timestamps(
-    wallets: list,
-    mapped_data: dict,
-):
-    for wallet in wallets:
-        wallet_data = mapped_data[wallet.id]
-        # Собираем все активности для кошелька
-        all_activities = [
-            activity
-            for token_data in wallet_data["tokens"].values()
-            for activity in token_data["activities"]
-        ]
-        last_activity_timestamp = (
-            datetime.fromtimestamp(
-                max(all_activities, key=lambda x: x.timestamp).timestamp,
-                tz=timezone.utc,
-            )
-            if all_activities
-            else None
-        )
-        last_activity_timestamp_in_db = wallet.last_activity_timestamp
-        if last_activity_timestamp and (
-            last_activity_timestamp_in_db is None
-            or last_activity_timestamp > last_activity_timestamp_in_db
-        ):
-            wallet.last_activity_timestamp = last_activity_timestamp
-
-        first_activity_timestamp = (
-            datetime.fromtimestamp(
-                max(all_activities, key=lambda x: x.timestamp).timestamp,
-                tz=timezone.utc,
-            )
-            if all_activities
-            else None
-        )
-        first_activity_timestamp_in_db = wallet.first_activity_timestamp
-        if first_activity_timestamp and (
-            first_activity_timestamp_in_db is None
-            or first_activity_timestamp > first_activity_timestamp_in_db
-        ):
-            wallet.first_activity_timestamp = first_activity_timestamp
-
-
-def map_objects_by_address(objects):
-    mapped = {}
-    for obj in objects:
-        mapped[obj.address] = obj
-    return mapped

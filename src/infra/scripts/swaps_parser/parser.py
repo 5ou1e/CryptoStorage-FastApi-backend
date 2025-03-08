@@ -1,6 +1,6 @@
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from functools import partial
 from pathlib import Path
 
@@ -13,9 +13,9 @@ from pydantic.error_wrappers import ValidationError
 from tortoise import Tortoise
 from tortoise.transactions import in_transaction
 
-from src.infra.db.setup import init_db_async
+from src.infra.db.setup_tortoise import init_db_async
 
-from . import db_utils, utils
+from . import db_utils, utils, mappers, calculations
 from .flipside_queries import get_swaps, get_swaps_jupiter
 from .logger import logger
 
@@ -62,21 +62,21 @@ async def import_data_to_db(wallets, tokens, activities):
     created_wallets, created_tokens = await asyncio.gather(
         db_utils.import_wallets_data(wallets), db_utils.import_tokens(tokens)
     )
-    created_wallets_map = utils.map_objects_by_address(created_wallets)
-    created_tokens_map = utils.map_objects_by_address(created_tokens)
+    created_wallets_map = mappers.map_objects_by_address(created_wallets)
+    created_tokens_map = mappers.map_objects_by_address(created_tokens)
     logger.info("Кошельки импортированы")
     logger.info("Токены импортированы")
 
-    token_wallet_list = utils.create_wallet_token_ids_list(activities)
+    token_wallet_list = mappers.create_wallet_token_ids_list(activities)
     wallet_tokens = await db_utils.load_wallet_tokens(token_wallet_list)
     logger.info(f"WalletToken-статистики загружены")
 
-    mapped_data = utils.map_data_by_wallets(
+    mapped_data = mappers.map_data_by_wallets(
         created_wallets_map, created_tokens_map, activities
     )
     for stats in wallet_tokens:
         mapped_data[stats.wallet_id]["tokens"][stats.token_id]["stats"] = stats
-    utils.recalculate_wallet_token_stats(mapped_data)
+    calculations.recalculate_wallet_token_stats(mapped_data)
     logger.info(f"WalletToken-статистики пересчитаны")
 
     wt_stats = [
@@ -93,7 +93,7 @@ async def import_data_to_db(wallets, tokens, activities):
     logger.info(f"WalletToken-статистики импортированы")
 
     # После полуения кошельков из БД пересчитываем последн. активность и обновляем
-    utils.calculate_wallet_first_last_activity_timestamps(
+    calculations.calculate_wallet_first_last_activity_timestamps(
         created_wallets,
         mapped_data,
     )

@@ -2,7 +2,6 @@ import datetime
 
 from flipside import Flipside
 
-from . import utils
 from .config import SOL_ADDRESS
 from .logger import logger
 

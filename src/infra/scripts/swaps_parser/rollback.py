@@ -11,7 +11,7 @@ from src.settings import config
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-TIMESTAMP_FROM: int = "..."
+TIMESTAMP_FROM: int = "timestamp_from"
 
 
 async def process():

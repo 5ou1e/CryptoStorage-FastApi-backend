@@ -2,7 +2,7 @@ import asyncio
 import datetime
 from collections import defaultdict
 from itertools import chain
-from typing import Iterable, List, Optional
+from typing import List
 
 import numpy as np
 from tortoise import Model
@@ -11,25 +11,20 @@ from tortoise.transactions import in_transaction
 from src.infra.db.models.tortoise import (
     FlipsideCryptoAccount,
     FlipsideCryptoConfig,
-    Swap,
     Token,
     TokenPrice,
     Wallet,
-    WalletDetail,
-    WalletStatistic7d,
-    WalletStatistic30d,
-    WalletStatisticAll,
     WalletToken,
 )
 from src.infra.db.repositories.tortoise import (
-    SwapRepository,
-    TokenRepository,
-    WalletDetailRepository,
-    WalletRepository,
-    WalletStatistic7dRepository,
-    WalletStatistic30dRepository,
-    WalletStatisticAllRepository,
-    WalletTokenRepository,
+    TortoiseTokenRepository,
+    TortoiseWalletDetailRepository,
+    TortoiseWalletRepository,
+    TortoiseWalletStatistic7dRepository,
+    TortoiseWalletStatistic30dRepository,
+    TortoiseWalletStatisticAllRepository,
+    TortoiseSwapRepository,
+    TortoiseWalletTokenRepository,
 )
 
 from . import utils
@@ -80,21 +75,21 @@ async def import_wallets_data(wallets, chunks_count=10) -> list[Wallet]:
 
 async def import_wallets_data_chunk(wallets) -> list[Wallet]:
     """Импортируем кошельки со всеми связями в одной транзакции"""
-    repository = WalletRepository()
+    repository = TortoiseWalletRepository()
     async with in_transaction() as conn:
         await repository.bulk_create(objects=wallets, ignore_conflicts=True)
         created_addresses = list({wallet.address for wallet in wallets})
-        created_wallets: list[Wallet] = await repository.get(
+        created_wallets: list[Wallet] = await repository.get_list(
             filter_by={"address__in": created_addresses}
         )
         wallet_details, wallet_stats_7d, wallet_stats_30d, wallet_stats_all = (
             utils.create_wallets_relations(created_wallets)
         )
         await asyncio.gather(
-            WalletStatistic7dRepository().bulk_create(wallet_stats_7d),
-            WalletStatistic30dRepository().bulk_create(wallet_stats_30d),
-            WalletStatisticAllRepository().bulk_create(wallet_stats_all),
-            WalletDetailRepository().bulk_create(wallet_details),
+            TortoiseWalletStatistic7dRepository().bulk_create(wallet_stats_7d),
+            TortoiseWalletStatistic30dRepository().bulk_create(wallet_stats_30d),
+            TortoiseWalletStatisticAllRepository().bulk_create(wallet_stats_all),
+            TortoiseWalletDetailRepository().bulk_create(wallet_details),
         )
         return created_wallets
 
@@ -108,9 +103,9 @@ async def import_tokens(tokens, chunks_count=5) -> list[Token]:
 
 
 async def import_tokens_chunk(tokens) -> list[Token]:
-    repository = TokenRepository()
+    repository = TortoiseTokenRepository()
     await repository.bulk_create(tokens)
-    return await repository.get(
+    return await repository.get_list(
         filter_by={"address__in": [token.address for token in tokens]}
     )
 
@@ -119,7 +114,7 @@ async def update_wallets(records: List[Model], chunks_count: int = 10) -> None:
     chunks = np.array_split(records, chunks_count)
     await asyncio.gather(
         *[
-            WalletRepository().bulk_update(
+            TortoiseWalletRepository().bulk_update(
                 objects=chunks[i].tolist(),
                 fields=["first_activity_timestamp", "last_activity_timestamp"],
             )
@@ -129,7 +124,7 @@ async def update_wallets(records: List[Model], chunks_count: int = 10) -> None:
 
 
 async def import_activities(activities: List[Model]) -> None:
-    await SwapRepository().bulk_create(activities)
+    await TortoiseSwapRepository().bulk_create(activities)
 
 
 async def load_wallet_tokens(token_wallet_list, chunks_count: int = 5) -> list[Model]:
@@ -163,7 +158,7 @@ async def import_wallet_tokens(records: List[Model]):
     fields_to_update.remove("wallet_id")
     fields_to_update.remove("token_id")
     fields_to_update.remove("created_at")
-    await WalletTokenRepository().bulk_create(
+    await TortoiseWalletTokenRepository().bulk_create(
         records,
         ignore_conflicts=False,
         on_conflict=["wallet_id", "token_id"],
