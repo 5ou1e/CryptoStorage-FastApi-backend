@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
 from src.application.user.dto import (
-    UserCreate,
-    UserRead,
+    UserCreateDTO,
+    UserReadDTO,
 )
 from src.presentation.api.dependencies.auth import (
     auth_backend,
@@ -22,6 +22,6 @@ router.include_router(
 
 # Эндпоинты регистрации
 router.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreate),
+    fastapi_users.get_register_router(UserReadDTO, UserCreateDTO),
     prefix="",
 )

@@ -16,7 +16,7 @@ from tortoise import Tortoise
 
 from src.infra.db.setup_tortoise import init_db_async
 
-from src.infra.scripts.swaps_parser import db_utils, utils
+from src.application.etl.swaps_parser import db_utils, utils, calculations, mappers
 from .flipside_queries import (
     get_swaps,
     get_swaps_jupiter,

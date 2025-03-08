@@ -22,5 +22,4 @@ class BaseTokenRepository(BaseGenericRepository[TokenEntity], ABC):
 
 class BaseTokenPriceRepository(BaseGenericRepository[TokenPriceEntity], ABC):
     """Интерфейс репозитория Token-price"""
-
     pass

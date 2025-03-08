@@ -25,8 +25,8 @@ from src.application.interfaces.repositories.user import (
     BaseUserRepository,
 )
 from src.application.user.dto import (
-    UserCreate,
-    UserUpdate,
+    UserCreateDTO,
+    UserUpdateDTO,
 )
 from src.domain.entities.base_entity import (
     BaseEntity,
@@ -136,7 +136,7 @@ class UserService(IntegerIDMixin):
 
     async def create(
         self,
-        user_create: UserCreate,
+        user_create: UserCreateDTO,
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> UserEntity:
@@ -469,7 +469,7 @@ class UserService(IntegerIDMixin):
 
     async def update(
         self,
-        user_update: UserUpdate,
+        user_update: UserUpdateDTO,
         user: UserEntity,
         safe: bool = False,
         request: Optional[Request] = None,
@@ -479,7 +479,7 @@ class UserService(IntegerIDMixin):
 
         Triggers the on_after_update handler on success
 
-        :param user_update: The UserUpdate model containing
+        :param user_update: The UserUpdateDTO model containing
         the changes to apply to the user.
         :param user: The current user to update.
         :param safe: If True, sensitive values like is_superuser or is_verified
@@ -519,7 +519,7 @@ class UserService(IntegerIDMixin):
     async def validate_password(
         self,
         password: str,
-        user: Union[UserCreate, UserEntity],
+        user: Union[UserCreateDTO, UserEntity],
     ) -> None:
         """
         Validate a password.

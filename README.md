@@ -37,7 +37,6 @@ src/
 │   │   ├── setup_tortoise.py
 │   │   ├── utils.py
 │   ├── processors/
-│   ├── scripts/
 ├── presentation/
 │   ├── api/
 │   │   ├── dependencies/

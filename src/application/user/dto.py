@@ -6,11 +6,11 @@ from pydantic import (
 )
 
 
-class UserRead(schemas.BaseUser[int]):
+class UserReadDTO(schemas.BaseUser[int]):
     username: str | None = Field(None, max_length=150)
 
 
-class UserCreate(schemas.BaseUserCreate):
+class UserCreateDTO(schemas.BaseUserCreateDTO):
     username: str | None = Field(None, max_length=150)
 
     @model_validator(mode="before")
@@ -21,16 +21,16 @@ class UserCreate(schemas.BaseUserCreate):
         return data
 
 
-class UserUpdate(UserRead):
+class UserUpdateDTO(UserReadDTO):
     pass
 
 
-class UserResponse(BaseModel):
+class UserDTO(BaseModel):
     username: str | None = Field(None, max_length=150)
 
     class Config:
         from_attributes = True
 
 
-class UserListResponse(BaseModel):
-    data: list[UserResponse]
+class UsersDTO(BaseModel):
+    data: list[UserDTO]
