@@ -5,7 +5,9 @@ import aiohttp
 from tortoise import Tortoise
 
 from src.infra.db.models.tortoise import Swap
-from src.infra.db.setup_tortoise import init_db_async
+from src.infra.db.setup_tortoise import (
+    init_db_async,
+)
 from src.settings import config
 
 logger = logging.getLogger()
@@ -19,11 +21,19 @@ async def get_transaction(session, tx_hash):
         "jsonrpc": "2.0",
         "id": 1,
         "method": "getTransaction",
-        "params": [tx_hash, {"encoding": "json", "maxSupportedTransactionVersion": 0}],
+        "params": [
+            tx_hash,
+            {
+                "encoding": "json",
+                "maxSupportedTransactionVersion": 0,
+            },
+        ],
     }
     try:
         async with session.post(
-            config.solana.rpc_node_url, json=payload, timeout=5
+            config.solana.rpc_node_url,
+            json=payload,
+            timeout=5,
         ) as response:
             response.raise_for_status()
             json_data = await response.json()

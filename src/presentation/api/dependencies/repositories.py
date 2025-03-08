@@ -16,23 +16,33 @@ from src.infra.db.repositories.tortoise import (
 from src.infra.db.setup import get_db_session
 
 
-def get_user_repository(session: AsyncSession = Depends(get_db_session)):
+def get_user_repository(
+    session: AsyncSession = Depends(get_db_session),
+):
     return SQLAlchemyUserRepository(session)
 
 
-def get_wallet_repository(session: AsyncSession = Depends(get_db_session)):
+def get_wallet_repository(
+    session: AsyncSession = Depends(get_db_session),
+):
     return SQLAlchemyWalletRepository(session)
 
 
-def get_token_repository(session: AsyncSession = Depends(get_db_session)):
+def get_token_repository(
+    session: AsyncSession = Depends(get_db_session),
+):
     return SQLAlchemyTokenRepository(session)
 
 
-def get_wallet_token_repository(session: AsyncSession = Depends(get_db_session)):
+def get_wallet_token_repository(
+    session: AsyncSession = Depends(get_db_session),
+):
     return SQLAlchemyWalletTokenRepository(session)
 
 
-def get_swap_repository(session: AsyncSession = Depends(get_db_session)):
+def get_swap_repository(
+    session: AsyncSession = Depends(get_db_session),
+):
     return SQLAlchemySwapRepository(session)
 
 

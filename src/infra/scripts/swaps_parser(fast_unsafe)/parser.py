@@ -9,13 +9,18 @@ from flipside.errors.query_run_errors import (
     QueryRunCancelledError,
     QueryRunExecutionError,
 )
-from pydantic.error_wrappers import ValidationError
+from pydantic.error_wrappers import (
+    ValidationError,
+)
 from tortoise import Tortoise
 
-from src.infra.db.setup import init_db_async
+from src.infra.db.setup_tortoise import init_db_async
 
-from . import db_utils, utils
-from .flipside_queries import get_swaps, get_swaps_jupiter
+from src.infra.scripts.swaps_parser import db_utils, utils
+from .flipside_queries import (
+    get_swaps,
+    get_swaps_jupiter,
+)
 from .logger import logger
 
 BASE_DIR = Path(__file__).parent
@@ -24,7 +29,12 @@ with open(BASE_DIR / "tokens_blacklist.txt", "r") as file:
     BLACKLISTED_TOKENS = [line.strip() for line in file.readlines()]
 
 
-def fetch_data_for_period(start_time, end_time, flipside_apikey, is_jupiter=False):
+def fetch_data_for_period(
+    start_time,
+    end_time,
+    flipside_apikey,
+    is_jupiter=False,
+):
     offset = 0
     limit = 100000
     all_swaps = []
@@ -32,18 +42,22 @@ def fetch_data_for_period(start_time, end_time, flipside_apikey, is_jupiter=Fals
     stop = False
     while not stop:
         if is_jupiter:
-            logger.info(
-                f"Собираем данные Jupiter за {start_time} - {end_time} | offset: {offset}"
-            )
+            logger.info(f"Собираем данные Jupiter за {start_time} - {end_time} | offset: {offset}")
             swaps, count = get_swaps_jupiter(
-                flipside_apikey, start_time, end_time, offset=offset, limit=limit
+                flipside_apikey,
+                start_time,
+                end_time,
+                offset=offset,
+                limit=limit,
             )
         else:
-            logger.info(
-                f"Собираем данные за {start_time} - {end_time} | offset: {offset}"
-            )
+            logger.info(f"Собираем данные за {start_time} - {end_time} | offset: {offset}")
             swaps, count = get_swaps(
-                flipside_apikey, start_time, end_time, offset=offset, limit=limit
+                flipside_apikey,
+                start_time,
+                end_time,
+                offset=offset,
+                limit=limit,
             )
 
         all_swaps.extend(swaps)
@@ -63,7 +77,8 @@ async def process_wallet_tokens(
 ):
     # Получаем записи WalletToken из БД -> пересчитываем -> импортируем в бд обратно
     wallet_tokens = await db_utils.load_wallet_tokens(
-        token_wallet_list, chunks_count=chunks_count
+        token_wallet_list,
+        chunks_count=chunks_count,
     )
     logger.info(f"WalletToken-статистики загружены")
 
@@ -74,9 +89,7 @@ async def process_wallet_tokens(
     logger.info(f"WalletToken-статистики пересчитаны")
 
     wt_stats = [
-        token_data["stats"]
-        for wallet_data in mapped_data.values()
-        for token_data in wallet_data["tokens"].values()
+        token_data["stats"] for wallet_data in mapped_data.values() for token_data in wallet_data["tokens"].values()
     ]
 
     await db_utils.import_wallet_tokens(wt_stats, chunks_count=chunks_count)
@@ -84,26 +97,39 @@ async def process_wallet_tokens(
     return wt_stats
 
 
-async def import_data_to_db(swaps_all, swaps_jupiter, sol_prices, start_time, end_time):
+async def import_data_to_db(
+    swaps_all,
+    swaps_jupiter,
+    sol_prices,
+    start_time,
+    end_time,
+):
     # async with in_transaction() as conn:
     logger.info(f"Начинаем импорт данных за {start_time} - {end_time}")
     start = datetime.now()
     swaps = utils.combine_swaps(swaps_all, swaps_jupiter)
     wallets, tokens, activities = utils.extract_data_from_swaps(
-        swaps, sol_prices, blacklisted_tokens=BLACKLISTED_TOKENS
+        swaps,
+        sol_prices,
+        blacklisted_tokens=BLACKLISTED_TOKENS,
     )
 
     logger.info(f"Время создания обьектов: {datetime.now() - start}")
     logger.info("Начинаем импорт чанками!")
 
     created_wallets, created_tokens = await asyncio.gather(
-        db_utils.import_wallets(wallets), db_utils.import_tokens(tokens)
+        db_utils.import_wallets(wallets),
+        db_utils.import_tokens(tokens),
     )
 
     logger.info("Кошельки импортированы")
     logger.info("Токены импортированы")
 
-    mapped_data = mappers.map_data_by_wallets(created_wallets, created_tokens, activities)
+    mapped_data = mappers.map_data_by_wallets(
+        created_wallets,
+        created_tokens,
+        activities,
+    )
 
     # После полуения кошельков из БД пересчитываем последн. активность и обновляем
     utils.calculate_last_wallet_activity_timestamps(
@@ -122,9 +148,12 @@ async def import_data_to_db(swaps_all, swaps_jupiter, sol_prices, start_time, en
     )
     logger.info(f"Активности импортированы")
 
-    wallet_details, wallet_stats_7d, wallet_stats_30d, wallet_stats_all = (
-        utils.get_non_existing_wallet_relations(created_wallets.values())
-    )
+    (
+        wallet_details,
+        wallet_stats_7d,
+        wallet_stats_30d,
+        wallet_stats_all,
+    ) = utils.get_non_existing_wallet_relations(created_wallets.values())
 
     # Только после импорта всех активностей\статистик токенов импортируем связи кошелька
     await asyncio.gather(
@@ -160,7 +189,12 @@ async def import_data_to_db(swaps_all, swaps_jupiter, sol_prices, start_time, en
     # await conn.rollback()
 
 
-async def process_period(start_time, end_time, sol_prices, flipside_account):
+async def process_period(
+    start_time,
+    end_time,
+    sol_prices,
+    flipside_account,
+):
     start_parsing = datetime.now()
 
     intervals = utils.split_time_range(start_time, end_time, 12)
@@ -178,7 +212,10 @@ async def process_period(start_time, end_time, sol_prices, flipside_account):
                 loop.run_in_executor(
                     executor,
                     partial(
-                        fetch_data_for_period, start, end, flipside_account.api_key
+                        fetch_data_for_period,
+                        start,
+                        end,
+                        flipside_account.api_key,
                     ),
                 )
                 for start, end in intervals
@@ -205,7 +242,11 @@ async def process_period(start_time, end_time, sol_prices, flipside_account):
         logger.error(e)
         raise ValueError("Flipside Error")
 
-    for _swaps, _swaps_count, is_jupiter in results:
+    for (
+        _swaps,
+        _swaps_count,
+        is_jupiter,
+    ) in results:
         if is_jupiter:
             swaps_jupiter.extend(_swaps)
         else:
@@ -214,11 +255,15 @@ async def process_period(start_time, end_time, sol_prices, flipside_account):
 
     if swaps_count > 0 or len(swaps_jupiter) > 0:
         start_import = datetime.now()
-        await import_data_to_db(swaps, swaps_jupiter, sol_prices, start_time, end_time)
-        end_import = datetime.now()
-        logger.info(
-            f"\nВремя общee: {end_import - start_parsing} | Импорт: {end_import - start_import}"
+        await import_data_to_db(
+            swaps,
+            swaps_jupiter,
+            sol_prices,
+            start_time,
+            end_time,
         )
+        end_import = datetime.now()
+        logger.info(f"\nВремя общee: {end_import - start_parsing} | Импорт: {end_import - start_import}")
     else:
         logger.info(f"За период {start_time} - {end_time} нету свапов!")
 
@@ -235,9 +280,7 @@ async def _process():
 
         current_time = start_time
         while current_time < end_time:
-            next_time = current_time + timedelta(
-                minutes=60
-            )  # Максимальный диапазон за запрос
+            next_time = current_time + timedelta(minutes=60)  # Максимальный диапазон за запрос
             if next_time > end_time:
                 next_time = end_time
 
@@ -256,13 +299,21 @@ async def _process():
 
             try:
                 await process_period(
-                    current_time, next_time, sol_prices, flipside_account
+                    current_time,
+                    next_time,
+                    sol_prices,
+                    flipside_account,
                 )
                 await db_utils.update_flipside_config_swaps_parsed_untill(
-                    flipside_config, parsed_untill=next_time
+                    flipside_config,
+                    parsed_untill=next_time,
                 )
                 current_time = next_time
-            except (QueryRunExecutionError, QueryRunCancelledError, ValueError) as e:
+            except (
+                QueryRunExecutionError,
+                QueryRunCancelledError,
+                ValueError,
+            ) as e:
                 if isinstance(e, ValueError) and "Flipside Error" not in str(e):
                     raise e
                 logger.error(type(e))

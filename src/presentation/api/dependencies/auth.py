@@ -10,7 +10,9 @@ from fastapi_users.authentication import (
 
 from src.domain.entities.user import UserEntity
 from src.infra.db.models.tortoise import User
-from src.presentation.api.dependencies.services import get_user_service
+from src.presentation.api.dependencies.services import (
+    get_user_service,
+)
 from src.settings import config
 
 bearer_transport = BearerTransport(tokenUrl="v1/auth/jwt/login")

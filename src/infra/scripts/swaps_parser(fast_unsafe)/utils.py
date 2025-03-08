@@ -21,15 +21,23 @@ from .config import SOL_ADDRESS
 from .logger import logger
 
 
-def create_wallet_token_ids_list(activities: list[Swap]):
+def create_wallet_token_ids_list(
+    activities: list[Swap],
+):
     result = []
     unique_pairs = set()
     for activity in activities:
-        pair = (activity.wallet_id, activity.token_id)
+        pair = (
+            activity.wallet_id,
+            activity.token_id,
+        )
         if pair not in unique_pairs:
             unique_pairs.add(pair)
             result.append(
-                {"wallet_id": activity.wallet_id, "token_id": activity.token_id}
+                {
+                    "wallet_id": activity.wallet_id,
+                    "token_id": activity.token_id,
+                }
             )
     return result
 
@@ -58,11 +66,7 @@ def populate_swaps_data(mapped_swaps: dict):
                             swap["is_part_of_arbitrage_swap_event"] = True
             elif swappers_count == 2:
                 if okx_wallet in swappers_list:
-                    real_swapper = (
-                        swappers_list[0]
-                        if swappers_list[1] == okx_wallet
-                        else swappers_list[1]
-                    )
+                    real_swapper = swappers_list[0] if swappers_list[1] == okx_wallet else swappers_list[1]
                     for swap in _swaps:
                         swap["swapper"] = real_swapper
             elif swappers_count >= 3:
@@ -110,7 +114,8 @@ def combine_swaps(swaps: list[dict], swaps_jupiter: list[dict]):
 
 
 def filter_swaps(
-    swaps: list, blacklisted_tokens: List[str] | None = None
+    swaps: list,
+    blacklisted_tokens: List[str] | None = None,
 ) -> list[dict]:
     """Отфильтровывает неподходящие активности"""
     blacklisted_tokens = blacklisted_tokens or []
@@ -133,7 +138,9 @@ def filter_swaps(
 
 
 def extract_data_from_swaps(
-    swaps: list, sol_prices: dict, blacklisted_tokens: List[str] | None = None
+    swaps: list,
+    sol_prices: dict,
+    blacklisted_tokens: List[str] | None = None,
 ) -> Tuple[List[Wallet], List[Token], List[Swap]]:
     """Извлечение и создание обьектов кошельков, токенов и активностей из полученных swaps"""
     filtered_swaps = filter_swaps(swaps, blacklisted_tokens)
@@ -179,10 +186,12 @@ def extract_data_from_swaps(
             cost_usd=cost_usd,
             price_usd=price_usd,
             is_part_of_transaction_with_mt_3_swappers=swap.get(
-                "is_part_of_transaction_with_mt_3_swappers", False
+                "is_part_of_transaction_with_mt_3_swappers",
+                False,
             ),
             is_part_of_arbitrage_swap_event=swap.get(
-                "is_part_of_arbitrage_swap_event", False
+                "is_part_of_arbitrage_swap_event",
+                False,
             ),
         )
         activity.wallet_address = wallet_address
@@ -203,7 +212,9 @@ def extract_data_from_swaps(
 
 
 def map_data_by_wallets(
-    wallets_map: dict, tokens_map: dict, activities: List[Swap]
+    wallets_map: dict,
+    tokens_map: dict,
+    activities: List[Swap],
 ) -> dict:
     """Маппинг данных по кошелькам"""
 
@@ -229,7 +240,10 @@ def map_data_by_wallets(
         }  # Словарь с токеном и списком активностей
 
     def default_wallet_structure():
-        return {"wallet": None, "tokens": defaultdict(default_token_structure)}
+        return {
+            "wallet": None,
+            "tokens": defaultdict(default_token_structure),
+        }
 
     mapped_data = defaultdict(default_wallet_structure)
 
@@ -245,7 +259,9 @@ def map_data_by_wallets(
     return mapped_data
 
 
-def calculate_token_stats(token_data: dict) -> None:
+def calculate_token_stats(
+    token_data: dict,
+) -> None:
     """Пересчитывает статистику для связки кошелька с токеном"""
     stats = token_data["stats"]
     token_activities = token_data["activities"]
@@ -254,29 +270,19 @@ def calculate_token_stats(token_data: dict) -> None:
         if activity.event_type == "buy":
             stats.total_buys_count += 1
             stats.total_buy_amount_usd += activity.cost_usd if activity.cost_usd else 0
-            stats.total_buy_amount_token += (
-                activity.token_amount if activity.token_amount else 0
-            )
-            if not stats.first_buy_timestamp or (
-                activity.timestamp <= stats.first_buy_timestamp
-            ):
+            stats.total_buy_amount_token += activity.token_amount if activity.token_amount else 0
+            if not stats.first_buy_timestamp or (activity.timestamp <= stats.first_buy_timestamp):
                 stats.first_buy_timestamp = activity.timestamp
                 stats.first_buy_price_usd = activity.price_usd
         else:
             stats.total_sales_count += 1
             stats.total_sell_amount_usd += activity.cost_usd if activity.cost_usd else 0
-            stats.total_sell_amount_token += (
-                activity.token_amount if activity.token_amount else 0
-            )
-            if not stats.first_sell_timestamp or (
-                activity.timestamp <= stats.first_sell_timestamp
-            ):
+            stats.total_sell_amount_token += activity.token_amount if activity.token_amount else 0
+            if not stats.first_sell_timestamp or (activity.timestamp <= stats.first_sell_timestamp):
                 stats.first_sell_timestamp = activity.timestamp
                 stats.first_sell_price_usd = activity.price_usd
 
-        if not stats.last_activity_timestamp or (
-            activity.timestamp >= stats.last_activity_timestamp
-        ):
+        if not stats.last_activity_timestamp or (activity.timestamp >= stats.last_activity_timestamp):
             stats.last_activity_timestamp = activity.timestamp
 
         if activity.is_part_of_transaction_with_mt_3_swappers:
@@ -289,15 +295,14 @@ def calculate_token_stats(token_data: dict) -> None:
         and stats.first_sell_timestamp
         and (stats.first_buy_timestamp <= stats.first_sell_timestamp)
     ):
-        stats.first_buy_sell_duration = (
-            stats.first_sell_timestamp - stats.first_buy_timestamp
-        )
+        stats.first_buy_sell_duration = stats.first_sell_timestamp - stats.first_buy_timestamp
     if stats.total_buys_count > 0:
-        stats.total_profit_usd = (
-            stats.total_sell_amount_usd - stats.total_buy_amount_usd
-        )
+        stats.total_profit_usd = stats.total_sell_amount_usd - stats.total_buy_amount_usd
         stats.total_profit_percent = (
-            round(stats.total_profit_usd / stats.total_buy_amount_usd * 100, 2)
+            round(
+                stats.total_profit_usd / stats.total_buy_amount_usd * 100,
+                2,
+            )
             if not stats.total_buy_amount_usd == 0
             else None
         )
@@ -317,7 +322,8 @@ def recalculate_wallet_token_stats(wallets_dict):
             if not stats:
                 new_count += 1
                 stats = token_data["stats"] = WalletToken(
-                    token_id=token.id, wallet_id=wallet.id
+                    token_id=token.id,
+                    wallet_id=wallet.id,
                 )
             calculate_token_stats(token_data)
     logger.info(f"Новых токен-статс {new_count}")
@@ -327,10 +333,19 @@ def split_time_range(start_time, end_time, parts):
     """Разбивает временной промежуток на равные части"""
     delta = (end_time - start_time) / parts
     intervals = [
-        (start_time + i * delta, start_time + (i + 1) * delta) for i in range(parts - 1)
+        (
+            start_time + i * delta,
+            start_time + (i + 1) * delta,
+        )
+        for i in range(parts - 1)
     ]
     # Добавляем последний интервал, чтобы гарантировать точное совпадение с end_time
-    intervals.append((start_time + (parts - 1) * delta, end_time))
+    intervals.append(
+        (
+            start_time + (parts - 1) * delta,
+            end_time,
+        )
+    )
     return intervals
 
 
@@ -362,7 +377,12 @@ def get_non_existing_wallet_relations(wallets):
             )
             wallet_stats_all.append(_wallet_stats_all)
 
-    return wallet_details, wallet_stats_7d, wallet_stats_30d, wallet_stats_all
+    return (
+        wallet_details,
+        wallet_stats_7d,
+        wallet_stats_30d,
+        wallet_stats_all,
+    )
 
 
 def calculate_last_wallet_activity_timestamps(
@@ -373,13 +393,14 @@ def calculate_last_wallet_activity_timestamps(
         wallet_data = mapped_data[wallet.id]
         # Собираем все активности для кошелька
         all_activities = [
-            activity
-            for token_data in wallet_data["tokens"].values()
-            for activity in token_data["activities"]
+            activity for token_data in wallet_data["tokens"].values() for activity in token_data["activities"]
         ]
         last_activity_timestamp = (
             datetime.fromtimestamp(
-                max(all_activities, key=lambda x: x.timestamp).timestamp,
+                max(
+                    all_activities,
+                    key=lambda x: x.timestamp,
+                ).timestamp,
                 tz=timezone.utc,
             )
             if all_activities
@@ -387,7 +408,6 @@ def calculate_last_wallet_activity_timestamps(
         )
         last_activity_timestamp_in_db = wallet.last_activity_timestamp
         if last_activity_timestamp and (
-            last_activity_timestamp_in_db is None
-            or last_activity_timestamp > last_activity_timestamp_in_db
+            last_activity_timestamp_in_db is None or last_activity_timestamp > last_activity_timestamp_in_db
         ):
             wallet.last_activity_timestamp = last_activity_timestamp

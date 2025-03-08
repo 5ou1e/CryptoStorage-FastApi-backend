@@ -22,37 +22,43 @@ class BaseWalletDetailRepository(BaseGenericRepository[WalletDetailEntity], ABC)
 
 
 class BaseWalletStatistic7dRepository(
-    BaseGenericRepository[WalletStatistic7dEntity], ABC
+    BaseGenericRepository[WalletStatistic7dEntity],
+    ABC,
 ):
     pass
 
 
 class BaseWalletStatistic30dRepository(
-    BaseGenericRepository[WalletStatistic30dEntity], ABC
+    BaseGenericRepository[WalletStatistic30dEntity],
+    ABC,
 ):
     pass
 
 
 class BaseWalletStatisticAllRepository(
-    BaseGenericRepository[WalletStatisticAllEntity], ABC
+    BaseGenericRepository[WalletStatisticAllEntity],
+    ABC,
 ):
     pass
 
 
 class BaseWalletStatisticBuyPriceGt15k7dRepository(
-    BaseGenericRepository[WalletStatisticBuyPriceGt15k7dEntity], ABC
+    BaseGenericRepository[WalletStatisticBuyPriceGt15k7dEntity],
+    ABC,
 ):
     pass
 
 
 class BaseWalletStatisticBuyPriceGt15k30dRepository(
-    BaseGenericRepository[WalletStatisticBuyPriceGt15k30dEntity], ABC
+    BaseGenericRepository[WalletStatisticBuyPriceGt15k30dEntity],
+    ABC,
 ):
     pass
 
 
 class BaseWalletStatisticBuyPriceGt15kAllRepository(
-    BaseGenericRepository[WalletStatisticBuyPriceGt15kAllEntity], ABC
+    BaseGenericRepository[WalletStatisticBuyPriceGt15kAllEntity],
+    ABC,
 ):
     pass
 
@@ -68,9 +74,7 @@ class BaseWalletRepository(BaseGenericRepository[WalletEntity], ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_address_with_details_and_stats(
-        self, address: str
-    ) -> WalletEntity | None:
+    async def get_by_address_with_details_and_stats(self, address: str) -> WalletEntity | None:
         raise NotImplementedError
 
     @abstractmethod

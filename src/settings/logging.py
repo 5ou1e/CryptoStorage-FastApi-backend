@@ -74,27 +74,42 @@ CELERY_LOGGING = {
             "propagate": False,
         },
         "tasks.collect_sol_prices": {
-            "handlers": ["console", "task_collect_sol_prices_file"],
+            "handlers": [
+                "console",
+                "task_collect_sol_prices_file",
+            ],
             "level": "DEBUG",
             "propagate": False,
         },
         "tasks.parse_tokens_metadata": {
-            "handlers": ["console", "task_parse_tokens_metadata_file"],
+            "handlers": [
+                "console",
+                "task_parse_tokens_metadata_file",
+            ],
             "level": "DEBUG",
             "propagate": False,
         },
         "tasks.update_wallet_statistics": {
-            "handlers": ["console", "task_update_wallet_statistics"],
+            "handlers": [
+                "console",
+                "task_update_wallet_statistics",
+            ],
             "level": "INFO",
             "propagate": False,
         },
         "tasks.update_wallet_statistics_buy_price_gt_15k": {
-            "handlers": ["console", "task_update_wallet_statistics_buy_price_gt_15k"],
+            "handlers": [
+                "console",
+                "task_update_wallet_statistics_buy_price_gt_15k",
+            ],
             "level": "INFO",
             "propagate": False,
         },
         "tasks.send_wallets_in_tg": {
-            "handlers": ["console", "task_send_wallets_in_tg"],
+            "handlers": [
+                "console",
+                "task_send_wallets_in_tg",
+            ],
             "level": "INFO",
             "propagate": False,
         },

@@ -1,6 +1,12 @@
 from dataclasses import asdict
 from datetime import datetime
-from typing import Any, Iterable, List, Optional, TypeVar
+from typing import (
+    Any,
+    Iterable,
+    List,
+    Optional,
+    TypeVar,
+)
 
 from sqlalchemy import func, inspect, select
 from sqlalchemy.dialects.postgresql import insert
@@ -10,7 +16,9 @@ from sqlalchemy.orm import class_mapper
 from src.application.interfaces.repositories.generic_repository import (
     BaseGenericRepository,
 )
-from src.domain.entities.base_entity import BaseEntity
+from src.domain.entities.base_entity import (
+    BaseEntity,
+)
 from src.infra.db.models.sqlalchemy import Base
 
 Entity = TypeVar("Entity", bound=BaseEntity)
@@ -29,7 +37,11 @@ class SQLAlchemyGenericRepository(BaseGenericRepository[BaseEntity]):
         instance = await self._session.get(self.model_class, id_)
         return self.instance_to_entity(instance)
 
-    async def get_list(self, limit: int = None, offset: int = None) -> list[Entity]:
+    async def get_list(
+        self,
+        limit: int = None,
+        offset: int = None,
+    ) -> list[Entity]:
         query = select(self.model_class)
         if offset:
             query = query.offset(offset)
@@ -39,9 +51,9 @@ class SQLAlchemyGenericRepository(BaseGenericRepository[BaseEntity]):
         instances = result.scalars().all()
         return [self.instance_to_entity(instance) for instance in instances]
 
-    async def get_page(self, page: int = 1, per_page: int = 10) -> list[Entity]:
-        offset = (max(page, 1) - 1) * per_page
-        return await self.get_list(limit=per_page, offset=offset)
+    async def get_page(self, page: int = 1, page_size: int = 10) -> list[Entity]:
+        offset = (max(page, 1) - 1) * page_size
+        return await self.get_list(limit=page_size, offset=offset)
 
     async def get_count(self) -> int:
         query = select(func.count()).select_from(self.model_class)
@@ -81,11 +93,7 @@ class SQLAlchemyGenericRepository(BaseGenericRepository[BaseEntity]):
         elif update_fields and on_conflict:
             stmt = stmt.on_conflict_do_update(
                 index_elements=on_conflict,
-                set_={
-                    field: getattr(stmt.excluded, field)
-                    for field in update_fields
-                    if hasattr(stmt.excluded, field)
-                },
+                set_={field: getattr(stmt.excluded, field) for field in update_fields if hasattr(stmt.excluded, field)},
             )
         await self._session.execute(stmt, values)
 
@@ -120,7 +128,6 @@ class SQLAlchemyGenericRepository(BaseGenericRepository[BaseEntity]):
 
     def instance_to_entity(self, instance: model_class) -> Entity:
         instance_dict = {
-            column.key: getattr(instance, column.key)
-            for column in class_mapper(instance.__class__).columns
+            column.key: getattr(instance, column.key) for column in class_mapper(instance.__class__).columns
         }
         return self.entity_class(**instance_dict)

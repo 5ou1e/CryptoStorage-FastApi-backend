@@ -9,14 +9,26 @@ from flipside.errors.query_run_errors import (
     QueryRunCancelledError,
     QueryRunExecutionError,
 )
-from pydantic.error_wrappers import ValidationError
+from pydantic.error_wrappers import (
+    ValidationError,
+)
 from tortoise import Tortoise
 from tortoise.transactions import in_transaction
 
-from src.infra.db.setup_tortoise import init_db_async
+from src.infra.db.setup_tortoise import (
+    init_db_async,
+)
 
-from . import db_utils, utils, mappers, calculations
-from .flipside_queries import get_swaps, get_swaps_jupiter
+from . import (
+    calculations,
+    db_utils,
+    mappers,
+    utils,
+)
+from .flipside_queries import (
+    get_swaps,
+    get_swaps_jupiter,
+)
 from .logger import logger
 
 BASE_DIR = Path(__file__).parent
@@ -25,7 +37,12 @@ with open(BASE_DIR / "tokens_blacklist.txt", "r") as file:
     BLACKLISTED_TOKENS = [line.strip() for line in file.readlines()]
 
 
-def fetch_data_for_period(start_time, end_time, flipside_apikey, is_jupiter=False):
+def fetch_data_for_period(
+    start_time,
+    end_time,
+    flipside_apikey,
+    is_jupiter=False,
+):
     offset = 0
     limit = 100000
     all_swaps = []
@@ -33,18 +50,22 @@ def fetch_data_for_period(start_time, end_time, flipside_apikey, is_jupiter=Fals
     stop = False
     while not stop:
         if is_jupiter:
-            logger.debug(
-                f"Собираем данные Jupiter за {start_time} - {end_time} | offset: {offset}"
-            )
+            logger.debug(f"Собираем данные Jupiter за {start_time} - {end_time} | offset: {offset}")
             swaps, count = get_swaps_jupiter(
-                flipside_apikey, start_time, end_time, offset=offset, limit=limit
+                flipside_apikey,
+                start_time,
+                end_time,
+                offset=offset,
+                limit=limit,
             )
         else:
-            logger.debug(
-                f"Собираем данные за {start_time} - {end_time} | offset: {offset}"
-            )
+            logger.debug(f"Собираем данные за {start_time} - {end_time} | offset: {offset}")
             swaps, count = get_swaps(
-                flipside_apikey, start_time, end_time, offset=offset, limit=limit
+                flipside_apikey,
+                start_time,
+                end_time,
+                offset=offset,
+                limit=limit,
             )
 
         all_swaps.extend(swaps)
@@ -60,7 +81,8 @@ def fetch_data_for_period(start_time, end_time, flipside_apikey, is_jupiter=Fals
 async def import_data_to_db(wallets, tokens, activities):
     # async with in_transaction() as conn:
     created_wallets, created_tokens = await asyncio.gather(
-        db_utils.import_wallets_data(wallets), db_utils.import_tokens(tokens)
+        db_utils.import_wallets_data(wallets),
+        db_utils.import_tokens(tokens),
     )
     created_wallets_map = mappers.map_objects_by_address(created_wallets)
     created_tokens_map = mappers.map_objects_by_address(created_tokens)
@@ -72,7 +94,9 @@ async def import_data_to_db(wallets, tokens, activities):
     logger.info(f"WalletToken-статистики загружены")
 
     mapped_data = mappers.map_data_by_wallets(
-        created_wallets_map, created_tokens_map, activities
+        created_wallets_map,
+        created_tokens_map,
+        activities,
     )
     for stats in wallet_tokens:
         mapped_data[stats.wallet_id]["tokens"][stats.token_id]["stats"] = stats
@@ -80,9 +104,7 @@ async def import_data_to_db(wallets, tokens, activities):
     logger.info(f"WalletToken-статистики пересчитаны")
 
     wt_stats = [
-        token_data["stats"]
-        for wallet_data in mapped_data.values()
-        for token_data in wallet_data["tokens"].values()
+        token_data["stats"] for wallet_data in mapped_data.values() for token_data in wallet_data["tokens"].values()
     ]
 
     # Импортируем активности и статистики обязательно в транзакции!
@@ -109,7 +131,12 @@ async def import_data_to_db(wallets, tokens, activities):
     # await conn.rollback()
 
 
-async def process_period(start_time, end_time, sol_prices, flipside_account):
+async def process_period(
+    start_time,
+    end_time,
+    sol_prices,
+    flipside_account,
+):
     start_parsing = datetime.now()
     logger.info(f"-" * 50)
     logger.info(f"-" * 50)
@@ -127,7 +154,10 @@ async def process_period(start_time, end_time, sol_prices, flipside_account):
                 loop.run_in_executor(
                     executor,
                     partial(
-                        fetch_data_for_period, start, end, flipside_account.api_key
+                        fetch_data_for_period,
+                        start,
+                        end,
+                        flipside_account.api_key,
                     ),
                 )
                 for start, end in intervals
@@ -153,7 +183,11 @@ async def process_period(start_time, end_time, sol_prices, flipside_account):
         logger.error(e)
         raise ValueError("Flipside Error")
 
-    for _swaps, _swaps_count, is_jupiter in results:
+    for (
+        _swaps,
+        _swaps_count,
+        is_jupiter,
+    ) in results:
         if is_jupiter:
             swaps_jupiter.extend(_swaps)
         else:
@@ -200,9 +234,7 @@ async def _process():
 
         current_time = start_time
         while current_time < end_time:
-            next_time = current_time + timedelta(
-                minutes=60
-            )  # Максимальный диапазон за запрос
+            next_time = current_time + timedelta(minutes=60)  # Максимальный диапазон за запрос
             if next_time > end_time:
                 next_time = end_time
 
@@ -221,13 +253,21 @@ async def _process():
 
             try:
                 await process_period(
-                    current_time, next_time, sol_prices, flipside_account
+                    current_time,
+                    next_time,
+                    sol_prices,
+                    flipside_account,
                 )
                 await db_utils.update_flipside_config_swaps_parsed_untill(
-                    flipside_config, parsed_untill=next_time
+                    flipside_config,
+                    parsed_untill=next_time,
                 )
                 current_time = next_time
-            except (QueryRunExecutionError, QueryRunCancelledError, ValueError) as e:
+            except (
+                QueryRunExecutionError,
+                QueryRunCancelledError,
+                ValueError,
+            ) as e:
                 if isinstance(e, ValueError) and "Flipside Error" not in str(e):
                     raise e
                 logger.error(type(e))

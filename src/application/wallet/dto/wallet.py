@@ -3,10 +3,16 @@ from typing import List, Optional
 from fastapi import Query
 from pydantic import BaseModel, Field
 
-from src.application.common.dto import PaginationResult
+from src.application.common.dto import (
+    PaginationResult,
+)
 
 from .wallet_details import WalletDetailsDTO
-from .wallet_stats import WalletStats7dDTO, WalletStats30dDTO, WalletStatsAllDTO
+from .wallet_stats import (
+    WalletStats7dDTO,
+    WalletStats30dDTO,
+    WalletStatsAllDTO,
+)
 
 
 class WalletDTO(BaseModel):
@@ -36,16 +42,28 @@ class WalletsPageDTO(WalletsDTO, PaginationResult):
 
 class GetWalletsFilters(BaseModel):
     details__is_bot: Optional[bool] = Field(
-        Query(None, description="Является ли кошелек арбитраж-ботом")
+        Query(
+            None,
+            description="Является ли кошелек арбитраж-ботом",
+        )
     )
     details__is_scammer: Optional[bool] = Field(
-        Query(None, description="Является ли кошелек скамерским")
+        Query(
+            None,
+            description="Является ли кошелек скамерским",
+        )
     )
     stats_all__winrate__gte: Optional[float] = Field(
-        Query(None, description="(All) Винрейт в % больше")
+        Query(
+            None,
+            description="(All) Винрейт в % больше",
+        )
     )
     stats_all__winrate__lte: Optional[float] = Field(
-        Query(None, description="(All) Винрейт в % меньше")
+        Query(
+            None,
+            description="(All) Винрейт в % меньше",
+        )
     )
 
     # details__is_bot__in: Optional[List[bool]] = Field(Query(None), description="")
@@ -54,7 +72,10 @@ class GetWalletsFilters(BaseModel):
     # stats_all__total_profit_multiplier__gte: Optional[float] = Field(None, description="")
     # stats_all__total_profit_multiplier__lte: Optional[float] = Field(None, description="")
     stats_all__total_token__gte: Optional[int] = Field(
-        Query(None, description="(All) Всего токенов")
+        Query(
+            None,
+            description="(All) Всего токенов",
+        )
     )
     # stats_all__total_token__lte: Optional[int] = Field(None, description="")
     # stats_all__token_avg_buy_amount__gte: Optional[float] = Field(None, description="")

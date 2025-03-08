@@ -9,7 +9,9 @@ from solders.pubkey import Pubkey
 from tortoise import Tortoise
 
 from src.infra.db.models.tortoise import Token
-from src.infra.db.setup_tortoise import init_db_async
+from src.infra.db.setup_tortoise import (
+    init_db_async,
+)
 
 logger = logging.getLogger("tasks.parse_tokens_metadata")
 
@@ -29,9 +31,7 @@ async def parse_tokens_metadata_async():
 
 
 async def get_tokens_to_process():
-    tokens = await Token.filter(is_metadata_parsed=False).limit(
-        100
-    )  # Получаем токены, которые не были обработаны
+    tokens = await Token.filter(is_metadata_parsed=False).limit(100)  # Получаем токены, которые не были обработаны
     return tokens
 
 
@@ -41,9 +41,7 @@ async def process_tokens(tokens):
 
 async def fetch_and_update_token_metadata(token):
     try:
-        metadata = await fetch_token_metadata(
-            token.address
-        )  # Функция для получения метаданных для токена
+        metadata = await fetch_token_metadata(token.address)  # Функция для получения метаданных для токена
     except Exception as e:
         logger.debug(f"Ошибка парсинга метаданных токена: {token} - {e}")
         # traceback.print_exc()
@@ -54,9 +52,7 @@ async def fetch_and_update_token_metadata(token):
         try:
             json_metadata = await fetch_json_metadata_from_uri(uri)
         except Exception as e:
-            logger.debug(
-                f"Не удалось получить JSON-метаданные по URI токена {token} - {e}"
-            )
+            logger.debug(f"Не удалось получить JSON-метаданные по URI токена {token} - {e}")
     await update_token(token, metadata, json_metadata)
     logger.debug(f"Метаданные токена {token.address} успешно обновлены!")
 
@@ -86,12 +82,14 @@ async def fetch_token_metadata(token_address):
 
 
 async def get_token_metadata_pubkey(mint_address):
-    metadata_program_id = Pubkey.from_string(
-        "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-    )
+    metadata_program_id = Pubkey.from_string("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
     mint_pubkey = Pubkey.from_string(mint_address)
     metadata_pubkey = Pubkey.find_program_address(
-        [b"metadata", bytes(metadata_program_id), bytes(mint_pubkey)],
+        [
+            b"metadata",
+            bytes(metadata_program_id),
+            bytes(mint_pubkey),
+        ],
         metadata_program_id,
     )[0]
     return metadata_pubkey
@@ -109,11 +107,16 @@ async def get_token_account_info(pubkey):
         "jsonrpc": "2.0",
         "id": 1,
         "method": "getAccountInfo",
-        "params": [pubkey, {"encoding": "base64"}],
+        "params": [
+            pubkey,
+            {"encoding": "base64"},
+        ],
     }
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
         async with session.post(
-            "http://ny.rpc.onyxnodes.com:8899/", json=payload, headers=headers
+            "http://ny.rpc.onyxnodes.com:8899/",
+            json=payload,
+            headers=headers,
         ) as resp:
             data = await resp.text()
             result = json.loads(data)
@@ -129,7 +132,11 @@ def decode_metadata(data):
         name_len = struct.unpack_from("<B", decoded_data, offset)[0]
         offset += 4  # Длина имени занимает 1 байт
         name = (
-            struct.unpack_from(f"<{name_len}s", decoded_data, offset)[0]
+            struct.unpack_from(
+                f"<{name_len}s",
+                decoded_data,
+                offset,
+            )[0]
             .decode("utf-8")
             .rstrip("\x00")
         )
@@ -137,7 +144,11 @@ def decode_metadata(data):
         symbol_len = struct.unpack_from("<B", decoded_data, offset)[0]
         offset += 4  # Длина символа занимает 1 байт
         symbol = (
-            struct.unpack_from(f"<{symbol_len}s", decoded_data, offset)[0]
+            struct.unpack_from(
+                f"<{symbol_len}s",
+                decoded_data,
+                offset,
+            )[0]
             .decode("utf-8")
             .rstrip("\x00")
         )
@@ -145,11 +156,22 @@ def decode_metadata(data):
         uri_len = struct.unpack_from("<B", decoded_data, offset)[0]
         offset += 4  # Длина URI занимает 1 байт
         uri = (
-            struct.unpack_from(f"<{uri_len}s", decoded_data, offset)[0]
+            struct.unpack_from(
+                f"<{uri_len}s",
+                decoded_data,
+                offset,
+            )[0]
             .decode("utf-8")
             .rstrip("\x00")
         )
-        return {"name": name, "symbol": symbol, "uri": uri}
-    except (struct.error, UnicodeDecodeError) as e:
+        return {
+            "name": name,
+            "symbol": symbol,
+            "uri": uri,
+        }
+    except (
+        struct.error,
+        UnicodeDecodeError,
+    ) as e:
         logger.debug(f"Error decoding metadata: {e}")
         raise e

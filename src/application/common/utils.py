@@ -3,7 +3,10 @@ from typing import List, Type, TypeVar
 
 from pydantic import BaseModel
 
-from src.application.common.dto import Pagination, PaginationResult
+from src.application.common.dto import (
+    Pagination,
+    PaginationResult,
+)
 
 T = TypeVar("T", bound=PaginationResult)
 
@@ -18,17 +21,17 @@ def create_paginated_response(
     """
     Функция создает ответ с пагинацией, заполняя переданные данные в соответствующую модель.
     """
-    per_page = pagination.per_page
-    total_pages = math.ceil(total_count / per_page)
+    page_size = pagination.page_size
+    total_pages = math.ceil(total_count / page_size)
     count = len(data)
     response_data = {data_field: data}  # Данные, которые должны быть вложены в модель
     return response_model(
         page=pagination.page,
-        per_page=pagination.per_page,
+        page_size=pagination.page_size,
         count=count,
         total_count=total_count,
         total_pages=total_pages,
-        **response_data
+        **response_data,
     )
 
 
@@ -53,7 +56,10 @@ def classify_token_trade_status(buy_status: str, sell_status: str):
         ("before", "same"),
     ]:
         status = "before"
-    elif (buy_status, sell_status) == ("same", "same"):
+    elif (buy_status, sell_status) == (
+        "same",
+        "same",
+    ):
         status = "same"
     else:
         # ("before", "after"),
@@ -62,7 +68,9 @@ def classify_token_trade_status(buy_status: str, sell_status: str):
     return status
 
 
-def classify_related_wallet_status(statuses_: set):
+def classify_related_wallet_status(
+    statuses_: set,
+):
     if statuses_ == {"same"}:
         status = "similar"
     elif statuses_ <= {"after", "same"}:

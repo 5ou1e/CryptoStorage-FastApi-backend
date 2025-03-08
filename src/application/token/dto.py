@@ -2,7 +2,9 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.application.common.dto import PaginationResult
+from src.application.common.dto import (
+    PaginationResult,
+)
 
 
 class TokenDTO(BaseModel):

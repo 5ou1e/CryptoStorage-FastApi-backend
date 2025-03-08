@@ -2,7 +2,11 @@ import uuid
 
 from tortoise import Model, fields
 
-from .common import IntIDMixin, TimestampsMixin, UUIDIDMixin
+from .common import (
+    IntIDMixin,
+    TimestampsMixin,
+    UUIDIDMixin,
+)
 
 
 class Token(Model, UUIDIDMixin, TimestampsMixin):
@@ -17,7 +21,10 @@ class Token(Model, UUIDIDMixin, TimestampsMixin):
     )
     logo = fields.TextField(max_length=255, null=True, blank=True)
     created_on = fields.CharField(
-        max_length=255, null=True, blank=True, verbose_name="Создан на"
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name="Создан на",
     )
     is_metadata_parsed = fields.BooleanField(default=False)
 

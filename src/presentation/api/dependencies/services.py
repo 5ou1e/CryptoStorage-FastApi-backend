@@ -2,9 +2,15 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from src.application.token.queries.get_token_by_address import GetTokenByAddressHandler
-from src.application.token.queries.get_tokens import GetTokensHandler
-from src.application.user.service import UserService
+from src.application.token.queries.get_token_by_address import (
+    GetTokenByAddressHandler,
+)
+from src.application.token.queries.get_tokens import (
+    GetTokensHandler,
+)
+from src.application.user.service import (
+    UserService,
+)
 from src.application.wallet.queries.get_wallet_activities import (
     GetWalletActivitiesHandler,
 )
@@ -14,11 +20,19 @@ from src.application.wallet.queries.get_wallet_by_address import (
 from src.application.wallet.queries.get_wallet_related_wallets import (
     GetWalletRelatedWalletsHandler,
 )
-from src.application.wallet.queries.get_wallet_tokens import GetWalletTokensHandler
-from src.application.wallet.queries.get_wallets import GetWalletsHandler
+from src.application.wallet.queries.get_wallet_tokens import (
+    GetWalletTokensHandler,
+)
+from src.application.wallet.queries.get_wallets import (
+    GetWalletsHandler,
+)
 from src.infra.db.setup import get_db_session
-from src.infra.db.uow.sqlachemy import SQLAlchemyUnitOfWork
-from src.infra.processors.password_hasher_argon import password_hasher_argon
+from src.infra.db.uow.sqlachemy import (
+    SQLAlchemyUnitOfWork,
+)
+from src.infra.processors.password_hasher_argon import (
+    password_hasher_argon,
+)
 
 from .repositories import (
     get_swap_repository,
@@ -38,20 +52,28 @@ def get_user_service(
     return UserService(user_repository, password_hasher_argon)
 
 
-def get_wallet_by_address_handler(wallet_repository=Depends(get_wallet_repository)):
+def get_wallet_by_address_handler(
+    wallet_repository=Depends(get_wallet_repository),
+):
     return GetWalletByAddressHandler(wallet_repository)
 
 
 GetWalletByAddressHandlerDep = Annotated[
-    GetWalletByAddressHandler, Depends(get_wallet_by_address_handler)
+    GetWalletByAddressHandler,
+    Depends(get_wallet_by_address_handler),
 ]
 
 
-def get_wallets_handler(wallet_repository=Depends(get_wallet_repository)):
+def get_wallets_handler(
+    wallet_repository=Depends(get_wallet_repository),
+):
     return GetWalletsHandler(wallet_repository)
 
 
-GetWalletsHandlerDep = Annotated[GetWalletsHandler, Depends(get_wallets_handler)]
+GetWalletsHandlerDep = Annotated[
+    GetWalletsHandler,
+    Depends(get_wallets_handler),
+]
 
 
 def get_wallet_tokens_handler(
@@ -62,7 +84,8 @@ def get_wallet_tokens_handler(
 
 
 GetWalletTokensHandlerDep = Annotated[
-    GetWalletTokensHandler, Depends(get_wallet_tokens_handler)
+    GetWalletTokensHandler,
+    Depends(get_wallet_tokens_handler),
 ]
 
 
@@ -78,7 +101,8 @@ def get_wallet_activities_handler(
 
 
 GetWalletActivitiesHandlerDep = Annotated[
-    GetWalletActivitiesHandler, Depends(get_wallet_activities_handler)
+    GetWalletActivitiesHandler,
+    Depends(get_wallet_activities_handler),
 ]
 
 
@@ -88,12 +112,15 @@ def get_wallet_related_wallets_handler(
     swap_repository=Depends(get_swap_repository_tortoise),
 ):
     return GetWalletRelatedWalletsHandler(
-        wallet_repository, wallet_token_repository, swap_repository
+        wallet_repository,
+        wallet_token_repository,
+        swap_repository,
     )
 
 
 GetWalletRelatedWalletsHandlerDep = Annotated[
-    GetWalletRelatedWalletsHandler, Depends(get_wallet_related_wallets_handler)
+    GetWalletRelatedWalletsHandler,
+    Depends(get_wallet_related_wallets_handler),
 ]
 
 
@@ -104,7 +131,8 @@ def get_token_by_address_handler(
 
 
 GetTokenByAddressHandlerDep = Annotated[
-    GetTokenByAddressHandler, Depends(get_token_by_address_handler)
+    GetTokenByAddressHandler,
+    Depends(get_token_by_address_handler),
 ]
 
 

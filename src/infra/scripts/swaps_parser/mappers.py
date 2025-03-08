@@ -5,7 +5,9 @@ from src.infra.db.models.tortoise import Swap
 
 
 def map_data_by_wallets(
-    wallets_map: dict, tokens_map: dict, activities: List[Swap]
+    wallets_map: dict,
+    tokens_map: dict,
+    activities: List[Swap],
 ) -> dict:
     """Маппинг данных по кошелькам"""
 
@@ -31,7 +33,10 @@ def map_data_by_wallets(
         }  # Словарь с токеном и списком активностей
 
     def default_wallet_structure():
-        return {"wallet": None, "tokens": defaultdict(default_token_structure)}
+        return {
+            "wallet": None,
+            "tokens": defaultdict(default_token_structure),
+        }
 
     mapped_data = defaultdict(default_wallet_structure)
 
@@ -47,15 +52,23 @@ def map_data_by_wallets(
     return mapped_data
 
 
-def create_wallet_token_ids_list(activities: list[Swap]):
+def create_wallet_token_ids_list(
+    activities: list[Swap],
+):
     result = []
     unique_pairs = set()
     for activity in activities:
-        pair = (activity.wallet_id, activity.token_id)
+        pair = (
+            activity.wallet_id,
+            activity.token_id,
+        )
         if pair not in unique_pairs:
             unique_pairs.add(pair)
             result.append(
-                {"wallet_id": activity.wallet_id, "token_id": activity.token_id}
+                {
+                    "wallet_id": activity.wallet_id,
+                    "token_id": activity.token_id,
+                }
             )
     return result
 
@@ -65,5 +78,3 @@ def map_objects_by_address(objects):
     for obj in objects:
         mapped[obj.address] = obj
     return mapped
-
-

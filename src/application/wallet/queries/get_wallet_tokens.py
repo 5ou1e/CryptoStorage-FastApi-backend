@@ -1,5 +1,7 @@
 from src.application.common.dto import Pagination
-from src.application.common.utils import create_paginated_response
+from src.application.common.utils import (
+    create_paginated_response,
+)
 from src.application.interfaces.repositories.wallet import (
     BaseWalletRepository,
     BaseWalletTokenRepository,
@@ -9,7 +11,9 @@ from src.application.wallet.dto import (
     WalletTokenDTO,
     WalletTokensPageDTO,
 )
-from src.application.wallet.exceptions import WalletNotFoundException
+from src.application.wallet.exceptions import (
+    WalletNotFoundException,
+)
 
 
 class GetWalletTokensHandler:
@@ -34,14 +38,12 @@ class GetWalletTokensHandler:
         filter_by["wallet_id"] = wallet.id
         wallet_tokens = await self._wallet_token_repository.get_page(
             page=pagination.page,
-            per_page=pagination.per_page,
+            page_size=pagination.page_size,
         )
         total_count = await self._wallet_token_repository.get_count(
             # filter_by=filter_by
         )
-        wallet_tokens_response = [
-            WalletTokenDTO.from_orm(token) for token in wallet_tokens
-        ]
+        wallet_tokens_response = [WalletTokenDTO.from_orm(token) for token in wallet_tokens]
         return create_paginated_response(
             data=wallet_tokens_response,
             total_count=total_count,

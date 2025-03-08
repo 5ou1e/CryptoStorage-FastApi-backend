@@ -14,7 +14,10 @@ from src.application.wallet.dto import (
     WalletsPageDTO,
     WalletTokensPageDTO,
 )
-from src.presentation.api.dependencies.auth import CurrentUserDep, get_current_user
+from src.presentation.api.dependencies.auth import (
+    CurrentUserDep,
+    get_current_user,
+)
 from src.presentation.api.dependencies.services import (
     GetWalletActivitiesHandlerDep,
     GetWalletByAddressHandlerDep,
@@ -22,7 +25,9 @@ from src.presentation.api.dependencies.services import (
     GetWalletsHandlerDep,
     GetWalletTokensHandlerDep,
 )
-from src.presentation.api.schemas.response import ApiResponse
+from src.presentation.api.schemas.response import (
+    ApiResponse,
+)
 
 logger = logging.getLogger(__name__)
 

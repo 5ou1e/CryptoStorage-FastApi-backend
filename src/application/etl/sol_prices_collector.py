@@ -6,8 +6,13 @@ import pytz
 import requests
 from tortoise import Tortoise
 
-from src.infra.db.models.tortoise import Token, TokenPrice
-from src.infra.db.setup_tortoise import init_db_async
+from src.infra.db.models.tortoise import (
+    Token,
+    TokenPrice,
+)
+from src.infra.db.setup_tortoise import (
+    init_db_async,
+)
 from src.settings import config
 
 logger = logging.getLogger("tasks.collect_sol_prices")
@@ -26,14 +31,17 @@ async def collect_prices_async():
     current_time = start_time
     all_candles = []
     while current_time < end_time:
-        next_time = current_time + timedelta(
-            minutes=1000
-        )  # Максимальный диапазон за запрос
+        next_time = current_time + timedelta(minutes=1000)  # Максимальный диапазон за запрос
         if next_time > end_time:
             next_time = end_time
         logger.info(f"Собираем цены с  {current_time} до {next_time}...")
         try:
-            candles = fetch_candles(symbol, interval, current_time, next_time)
+            candles = fetch_candles(
+                symbol,
+                interval,
+                current_time,
+                next_time,
+            )
             all_candles.extend(candles)
             logger.debug(current_time, next_time)
         except Exception as e:
@@ -86,7 +94,11 @@ async def import_prices_to_db(candles, token):
     for candle in candles:
         timestamp = datetime.fromtimestamp((candle[0]) / 1000)  # Время закрытия свечи
         objects_to_create.append(
-            TokenPrice(token=token, minute=timestamp, price_usd=candle[4])
+            TokenPrice(
+                token=token,
+                minute=timestamp,
+                price_usd=candle[4],
+            )
         )
     await TokenPrice.bulk_create(
         objects_to_create,

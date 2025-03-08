@@ -1,10 +1,26 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import DECIMAL, UUID, BigInteger, Boolean, ForeignKey, Index, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import (
+    DECIMAL,
+    UUID,
+    BigInteger,
+    Boolean,
+    ForeignKey,
+    Index,
+    String,
+)
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
-from src.infra.db.models.sqlalchemy.base import Base, TimestampsMixin, UUIDIDMixin
+from src.infra.db.models.sqlalchemy.base import (
+    Base,
+    TimestampsMixin,
+    UUIDIDMixin,
+)
 
 
 class Swap(Base, UUIDIDMixin, TimestampsMixin):
@@ -21,18 +37,18 @@ class Swap(Base, UUIDIDMixin, TimestampsMixin):
     cost_usd: Mapped[Decimal | None] = mapped_column(DECIMAL(40, 20), nullable=True)
     price_usd: Mapped[Decimal | None] = mapped_column(DECIMAL(40, 20), nullable=True)
 
-    is_part_of_transaction_with_mt_3_swappers: Mapped[bool] = mapped_column(
-        Boolean, default=False
-    )
-    is_part_of_arbitrage_swap_event: Mapped[bool] = mapped_column(
-        Boolean, default=False
-    )
+    is_part_of_transaction_with_mt_3_swappers: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_part_of_arbitrage_swap_event: Mapped[bool] = mapped_column(Boolean, default=False)
 
     wallet_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("wallet.id", ondelete="CASCADE"), index=True
+        UUID(as_uuid=True),
+        ForeignKey("wallet.id", ondelete="CASCADE"),
+        index=True,
     )
     token_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("token.id", ondelete="CASCADE"), index=True
+        UUID(as_uuid=True),
+        ForeignKey("token.id", ondelete="CASCADE"),
+        index=True,
     )
 
     wallet = relationship("Wallet", backref="swaps")

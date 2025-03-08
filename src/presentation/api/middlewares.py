@@ -1,8 +1,13 @@
 import logging
 import time
 
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
+from starlette.middleware.base import (
+    BaseHTTPMiddleware,
+)
+from starlette.middleware.cors import (
+    CORSMiddleware,
+)
 from starlette.requests import Request
 
 from src.settings import config
@@ -24,7 +29,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 def setup_middlewares(app) -> None:
-    """Настройка миддлваров (например, CORS)."""
     app.add_middleware(
         CORSMiddleware,
         allow_origins=config.cors.allowed_hosts,

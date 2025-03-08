@@ -20,19 +20,22 @@ class BaseUserRepository(BaseGenericRepository[UserEntity], ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_oauth_account(
-        self, oauth: str, account_id: str
-    ) -> Optional[UserEntity]:
+    async def get_by_oauth_account(self, oauth: str, account_id: str) -> Optional[UserEntity]:
         raise NotImplementedError
 
     @abstractmethod
     async def add_oauth_account(
-        self, user: UserEntity, create_dict: Dict[str, Any]
+        self,
+        user: UserEntity,
+        create_dict: Dict[str, Any],
     ) -> UserEntity:
         raise NotImplementedError
 
     @abstractmethod
     async def update_oauth_account(
-        self, user: UserEntity, oauth_account: Model, update_dict: Dict[str, Any]
+        self,
+        user: UserEntity,
+        oauth_account: Model,
+        update_dict: Dict[str, Any],
     ) -> UserEntity:
         raise NotImplementedError

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass(eq=False)
 class ApplicationException(Exception):
-    """Base Error."""
+    """Базовая ошибка приложения"""
 
     @property
     def title(self) -> str:

@@ -71,7 +71,10 @@ def bulk_update_records_query(
 def convert_to_db_value(value, field_type=None, field_info=None):
     if value is None:
         value = "NULL"
-    if field_type in ["decimalfield", "mydecimalfield"]:
+    if field_type in [
+        "decimalfield",
+        "mydecimalfield",
+    ]:
         return f"CAST({value} AS DECIMAL({field_info.max_digits},{field_info.decimal_places}))"
     elif field_type == "floatfield":
         return f"CAST({value} AS double precision)"

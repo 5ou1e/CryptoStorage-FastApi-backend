@@ -6,7 +6,9 @@ from src.application.common.utils import (
     classify_related_wallet_status,
     classify_token_trade_status,
 )
-from src.application.interfaces.repositories.swap import BaseSwapRepository
+from src.application.interfaces.repositories.swap import (
+    BaseSwapRepository,
+)
 from src.application.interfaces.repositories.wallet import (
     BaseWalletRepository,
     BaseWalletTokenRepository,
@@ -17,7 +19,9 @@ from src.application.wallet.dto import (
     SimilarWalletDTO,
     WalletRelatedWalletsDTO,
 )
-from src.application.wallet.exceptions import WalletNotFoundException
+from src.application.wallet.exceptions import (
+    WalletNotFoundException,
+)
 
 
 class GetWalletRelatedWalletsHandler:
@@ -39,46 +43,50 @@ class GetWalletRelatedWalletsHandler:
 
         async def t(token_id):
             async with sem:
-                first_buy_activity, first_sell_activity = await asyncio.gather(
+                (
+                    first_buy_activity,
+                    first_sell_activity,
+                ) = await asyncio.gather(
                     self._swap_repository.get_first_by_wallet_and_token(
-                        wallet_id, token_id, event_type="buy"
+                        wallet_id,
+                        token_id,
+                        event_type="buy",
                     ),
                     self._swap_repository.get_first_by_wallet_and_token(
-                        wallet_id, token_id, event_type="sell"
+                        wallet_id,
+                        token_id,
+                        event_type="sell",
                     ),
                 )
-                if not first_buy_activity or not (
-                    first_buy_block_id := first_buy_activity.block_id
-                ):
+                if not first_buy_activity or not (first_buy_block_id := first_buy_activity.block_id):
                     return
-                if not first_sell_activity or not (
-                    first_sell_block_id := first_sell_activity.block_id
-                ):
+                if not first_sell_activity or not (first_sell_block_id := first_sell_activity.block_id):
                     return
                 # print(first_sell_activity)
                 # print(first_buy_activity)
 
-                neighbor_buy_activities = (
-                    await self._swap_repository.get_neighbors_by_token(
-                        token_id=token_id,
-                        block_id=first_buy_block_id,
-                        event_type="buy",
-                        exclude_wallets=[wallet_id],
-                    )
+                neighbor_buy_activities = await self._swap_repository.get_neighbors_by_token(
+                    token_id=token_id,
+                    block_id=first_buy_block_id,
+                    event_type="buy",
+                    exclude_wallets=[wallet_id],
                 )
                 # print(neighbor_buy_activities)
-                neighbor_sell_activities = (
-                    await self._swap_repository.get_neighbors_by_token(
-                        token_id=token_id,
-                        block_id=first_sell_block_id,
-                        event_type="sell",
-                        exclude_wallets=[wallet_id],
-                    )
+                neighbor_sell_activities = await self._swap_repository.get_neighbors_by_token(
+                    token_id=token_id,
+                    block_id=first_sell_block_id,
+                    event_type="sell",
+                    exclude_wallets=[wallet_id],
                 )
                 # print(neighbor_sell_activities)
 
                 # Маппинг по кошелькам, с первыми покупками\продажами
-                wallets_map = defaultdict(lambda: {"buy": None, "sell": None})
+                wallets_map = defaultdict(
+                    lambda: {
+                        "buy": None,
+                        "sell": None,
+                    }
+                )
                 for activity in neighbor_buy_activities:
                     if not hasattr(activity, "block_id"):
                         print(activity.__dict__)
@@ -87,21 +95,26 @@ class GetWalletRelatedWalletsHandler:
                         wallets_map[activity.wallet_id]["buy"] = activity
                 for activity in neighbor_sell_activities:
                     current_sell = wallets_map[activity.wallet_id]["sell"]
-                    if (
-                        current_sell is None
-                        or activity.block_id < current_sell.block_id
-                    ):
+                    if current_sell is None or activity.block_id < current_sell.block_id:
                         wallets_map[activity.wallet_id]["sell"] = activity
 
-                for w_id_, wallet_data in wallets_map.items():
-                    fb, fs = wallet_data["buy"], wallet_data["sell"]
+                for (
+                    w_id_,
+                    wallet_data,
+                ) in wallets_map.items():
+                    fb, fs = (
+                        wallet_data["buy"],
+                        wallet_data["sell"],
+                    )
                     if not (fb and fs):
                         continue
                     buy_status = classify_block_relation(
-                        fb.block_id, first_buy_block_id
+                        fb.block_id,
+                        first_buy_block_id,
                     )
                     sell_status = classify_block_relation(
-                        fs.block_id, first_sell_block_id
+                        fs.block_id,
+                        first_sell_block_id,
                     )
                     status = classify_token_trade_status(buy_status, sell_status)
 
@@ -126,16 +139,12 @@ class GetWalletRelatedWalletsHandler:
 
         # Обрабатываем каждый токен асинхронно для ускорения
         sem = asyncio.Semaphore(10)
-        await asyncio.gather(
-            *(t(wallet_token.token_id, sem) for wallet_token in wallet_tokens)
-        )
+        await asyncio.gather(*(t(wallet_token.token_id, sem) for wallet_token in wallet_tokens))
 
         # print(dict(related_wallets_map))
 
         # Получаем необходимые кошельки из БД
-        wallet_ids = [
-            w_id for w_id, tokens in related_wallets_map.items() if len(tokens) >= 3
-        ]
+        wallet_ids = [w_id for w_id, tokens in related_wallets_map.items() if len(tokens) >= 3]
         wallets = await self._wallet_repository.get_list(
             filter_by={
                 "id__in": wallet_ids,
@@ -149,7 +158,11 @@ class GetWalletRelatedWalletsHandler:
             "copied_by": CopiedByWalletDTO,
             "similar": SimilarWalletDTO,
         }
-        result = {"copying": [], "copied_by": [], "similar": []}
+        result = {
+            "copying": [],
+            "copied_by": [],
+            "similar": [],
+        }
 
         for wallet in wallets:
             total_token_count = wallet.stats_all.total_token if wallet.stats_all else 0
@@ -167,8 +180,7 @@ class GetWalletRelatedWalletsHandler:
                 # Обновляем время последней торговой метки
                 if token["sell_timestamp"]:
                     last_intersected_tokens_trade_timestamp = max(
-                        last_intersected_tokens_trade_timestamp
-                        or token["sell_timestamp"],
+                        last_intersected_tokens_trade_timestamp or token["sell_timestamp"],
                         token["sell_timestamp"],
                     )
             # Определяем статус кошелька
@@ -179,9 +191,7 @@ class GetWalletRelatedWalletsHandler:
             after_count = status_counts.get("after", 0)
             before_count = status_counts.get("before", 0)
             # Пересчитываем количество пересеченных токенов
-            intersected_tokens_count = (
-                mixed_count + same_count + after_count + before_count
-            )
+            intersected_tokens_count = mixed_count + same_count + after_count + before_count
 
             # if wallet_status == 'similar':
             #     total_token_count = wallet.stats_all.total_token
@@ -192,7 +202,10 @@ class GetWalletRelatedWalletsHandler:
             last_activity_timestamp = wallet.last_activity_timestamp
 
             intersected_tokens_percent = (
-                round(intersected_tokens_count / total_token_count * 100, 2)
+                round(
+                    intersected_tokens_count / total_token_count * 100,
+                    2,
+                )
                 if intersected_tokens_count and total_token_count
                 else None
             )

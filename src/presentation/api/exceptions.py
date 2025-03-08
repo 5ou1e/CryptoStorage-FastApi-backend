@@ -15,12 +15,8 @@ from src.presentation.api.schemas.response import ApiResponse
 
 
 def setup_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(
-        WalletNotFoundException, exception_handler(status.HTTP_404_NOT_FOUND)
-    )
-    app.add_exception_handler(
-        TokenNotFoundException, exception_handler(status.HTTP_404_NOT_FOUND)
-    )
+    app.add_exception_handler(WalletNotFoundException, exception_handler(status.HTTP_404_NOT_FOUND))
+    app.add_exception_handler(TokenNotFoundException, exception_handler(status.HTTP_404_NOT_FOUND))
     app.add_exception_handler(ApplicationException, exception_handler(500))
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, unknown_exception_handler)
@@ -44,9 +40,7 @@ async def application_exception_handler(
     )
 
 
-async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-) -> ORJSONResponse:
+async def validation_exception_handler(request: Request, exc: RequestValidationError | Exception) -> ORJSONResponse:
     """Обработчик ошибок валидации"""
     reformatted_message = defaultdict(list)
     for pydantic_error in exc.errors():
@@ -63,12 +57,8 @@ async def validation_exception_handler(
 
 async def unknown_exception_handler(request: Request, exc: Exception) -> ORJSONResponse:
     """Обработчик неизвестных ошибок"""
-    traceback_str = "".join(
-        traceback.format_exception(type(exc), exc, exc.__traceback__)
-    )
-    response = ApiResponse(
-        status="error", message=f"Внутренняя ошибка сервера {traceback_str[-200:]}"
-    )
+    traceback_str = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    response = ApiResponse(status="error", message=f"Внутренняя ошибка сервера {traceback_str[-200:]}")
     return ORJSONResponse(
         response.model_dump(),
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

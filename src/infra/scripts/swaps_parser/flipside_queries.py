@@ -7,7 +7,10 @@ from .logger import logger
 
 
 def sql_get_swaps(
-    start_time: datetime, end_time: datetime, offset: int = 0, limit: int | None = None
+    start_time: datetime,
+    end_time: datetime,
+    offset: int = 0,
+    limit: int | None = None,
 ):
     """SQL-запрос для получения swaps с Flipside-crypto"""
     if limit is None:
@@ -38,7 +41,10 @@ def sql_get_swaps(
 
 
 def sql_get_swaps_jupiter(
-    start_time: datetime, end_time: datetime, offset: int = 0, limit: int | None = None
+    start_time: datetime,
+    end_time: datetime,
+    offset: int = 0,
+    limit: int | None = None,
 ):
     """SQL-запрос для получения Jupiter-swaps с Flipside-crypto"""
     if limit is None:
@@ -68,9 +74,23 @@ def sql_get_swaps_jupiter(
     return sql
 
 
-def get_swaps(flipside_apikey, start_time, end_time, offset=0, limit=None):
-    flipside = Flipside(flipside_apikey, "https://api-v2.flipsidecrypto.xyz")
-    _query = sql_get_swaps(start_time, end_time, offset=offset, limit=limit)
+def get_swaps(
+    flipside_apikey,
+    start_time,
+    end_time,
+    offset=0,
+    limit=None,
+):
+    flipside = Flipside(
+        flipside_apikey,
+        "https://api-v2.flipsidecrypto.xyz",
+    )
+    _query = sql_get_swaps(
+        start_time,
+        end_time,
+        offset=offset,
+        limit=limit,
+    )
     query_result_set = flipside.query(_query)
     swaps = query_result_set.records if query_result_set.records else []
     records_count = len(query_result_set.records) if query_result_set.records else 0
@@ -80,9 +100,23 @@ def get_swaps(flipside_apikey, start_time, end_time, offset=0, limit=None):
     return swaps, records_count
 
 
-def get_swaps_jupiter(flipside_apikey, start_time, end_time, offset=0, limit=None):
-    flipside = Flipside(flipside_apikey, "https://api-v2.flipsidecrypto.xyz")
-    _query = sql_get_swaps_jupiter(start_time, end_time, offset=offset, limit=limit)
+def get_swaps_jupiter(
+    flipside_apikey,
+    start_time,
+    end_time,
+    offset=0,
+    limit=None,
+):
+    flipside = Flipside(
+        flipside_apikey,
+        "https://api-v2.flipsidecrypto.xyz",
+    )
+    _query = sql_get_swaps_jupiter(
+        start_time,
+        end_time,
+        offset=offset,
+        limit=limit,
+    )
     query_result_set = flipside.query(_query)
     swaps = query_result_set.records if query_result_set.records else []
     records_count = len(query_result_set.records) if query_result_set.records else 0

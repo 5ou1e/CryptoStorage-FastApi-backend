@@ -15,23 +15,32 @@ from src.domain.entities.wallet import (
     WalletStatisticAllEntity,
     WalletTokenEntity,
 )
-from src.infra.db.models.tortoise import Wallet, WalletToken
+from src.infra.db.models.tortoise import (
+    Wallet,
+    WalletToken,
+)
 from src.infra.db.repositories.tortoise import (
     TortoiseWalletDetailRepository,
     TortoiseWalletRepository,
     TortoiseWalletStatistic7dRepository,
     TortoiseWalletStatistic30dRepository,
     TortoiseWalletStatisticAllRepository,
-    TortoiseWalletTokenRepository,
 )
-from src.infra.db.setup_tortoise import init_db_async
+from src.infra.db.setup_tortoise import (
+    init_db_async,
+)
 
-from .utils import filter_period_tokens, recalculate_wallet_period_stats
+from .utils import (
+    filter_period_tokens,
+    recalculate_wallet_period_stats,
+)
 
 logger = logging.getLogger("tasks.update_wallet_statistics")
 
 
-async def update_single_wallet_statistics(wallet_id):
+async def update_single_wallet_statistics(
+    wallet_id,
+):
     # # TODO отрефакторить
     pass
     # try:
@@ -54,9 +63,7 @@ async def receive_wallets_from_db(
     """Загрузка данных из БД и помещение в очередь"""
     logger.info(f"Начинаем получение кошельков из БД")
     t1 = datetime.now()
-    wallets: list[WalletEntity] = (
-        await TortoiseWalletRepository().get_wallets_for_update_stats(count=count)
-    )
+    wallets: list[WalletEntity] = await TortoiseWalletRepository().get_wallets_for_update_stats(count=count)
     t2 = datetime.now()
     logger.info(f"Получили {len(wallets)} кошельков из БД | Время: {t2 - t1}")
     # Вместо того чтобы фетчить с БД просто создаем временные обьекты
@@ -101,13 +108,19 @@ async def fetch_wallet_tokens(
         if (len(batch) >= batch_size) or (wallet is None and batch):
             # Создаём копию батча для передачи в задачу
             tasks.append(
-                asyncio.create_task(_fetch_tokens(batch.copy(), fetched_wallets_queue))
+                asyncio.create_task(
+                    _fetch_tokens(
+                        batch.copy(),
+                        fetched_wallets_queue,
+                    )
+                )
             )
             batch.clear()
             # Если достигли лимита параллельных задач, ждём, пока хотя бы одна завершится
             if len(tasks) >= max_parallel:
                 done, pending = await asyncio.wait(
-                    tasks, return_when=asyncio.FIRST_COMPLETED
+                    tasks,
+                    return_when=asyncio.FIRST_COMPLETED,
                 )
                 tasks = list(pending)  # Обновляем список, оставляя незавершённые задачи
         if wallet is None:
@@ -119,7 +132,10 @@ async def fetch_wallet_tokens(
             return
 
 
-async def _fetch_tokens(wallets: list[WalletEntity], fetched_wallets_queue: Queue):
+async def _fetch_tokens(
+    wallets: list[WalletEntity],
+    fetched_wallets_queue: Queue,
+):
     # Загружаем связанные токены для кошельков
     # TODO: использовать метод репозитория
     # wallet_tokens = await WalletTokenRepository().get(
@@ -128,16 +144,10 @@ async def _fetch_tokens(wallets: list[WalletEntity], fetched_wallets_queue: Queu
     #     }
     # )
     start = datetime.now()
-    wallet_tokens = (
-        await WalletToken.filter(wallet_id__in=[wallet.id for wallet in wallets])
-        .all()
-        .values()
-    )
+    wallet_tokens = await WalletToken.filter(wallet_id__in=[wallet.id for wallet in wallets]).all().values()
     end = datetime.now()
     wt_count = len(wallet_tokens)
-    logger.info(
-        f"Подгрузили токены {len(wallets)} кошельков из БД | Токенов: {wt_count} | Время: {end-start}"
-    )
+    logger.info(f"Подгрузили токены {len(wallets)} кошельков из БД | Токенов: {wt_count} | Время: {end-start}")
     start = datetime.now()
     wallet_dict = {wallet.id: wallet for wallet in wallets}
     # Мапим токены по кошелькам
@@ -181,7 +191,9 @@ async def calculate_wallets(
 
 
 async def update_wallets(
-    calculated_wallets_queue: Queue, batch_size: int, max_parallel: int = 5
+    calculated_wallets_queue: Queue,
+    batch_size: int,
+    max_parallel: int = 5,
 ) -> None:
     """Обновление обработанных данных в БД"""
     batch = []
@@ -198,7 +210,8 @@ async def update_wallets(
             # Если достигли лимита параллельных задач, ждём, пока хотя бы одна завершится
             if len(tasks) >= max_parallel:
                 done, pending = await asyncio.wait(
-                    tasks, return_when=asyncio.FIRST_COMPLETED
+                    tasks,
+                    return_when=asyncio.FIRST_COMPLETED,
                 )
                 tasks = list(pending)  # Обновляем список, оставляя незавершённые задачи
         if wallet is None:
@@ -215,25 +228,33 @@ async def _update_wallets(wallets):
     wallet_stats_7d = [wallet.stats_7d for wallet in wallets]
     wallet_stats_30d = [wallet.stats_30d for wallet in wallets]
     # Обновляем статистику "за все время" только нужным кошелькам
-    wallet_stats_all = [
-        wallet.stats_all for wallet in wallets if wallet.need_update_stats_all
-    ]
-    wallets_details = [
-        wallet.details for wallet in wallets if wallet.need_update_stats_all
-    ]
+    wallet_stats_all = [wallet.stats_all for wallet in wallets if wallet.is_need_update_stats_all]
+    wallets_details = [wallet.details for wallet in wallets if wallet.is_need_update_stats_all]
     logger.info(f"{len(wallet_stats_all)}, {len(wallets_details)}")
-    exclude = ["id", "wallet_id", "token_id", "created_at", "updated_at"]
+    exclude = [
+        "id",
+        "wallet_id",
+        "token_id",
+        "created_at",
+        "updated_at",
+    ]
     for wallet in wallets:
         wallet.last_stats_check = now()
     await asyncio.gather(
         TortoiseWalletStatistic7dRepository().bulk_update(
-            wallet_stats_7d, excluded_fields=exclude, id_column="wallet_id"
+            wallet_stats_7d,
+            excluded_fields=exclude,
+            id_column="wallet_id",
         ),
         TortoiseWalletStatistic30dRepository().bulk_update(
-            wallet_stats_30d, excluded_fields=exclude, id_column="wallet_id"
+            wallet_stats_30d,
+            excluded_fields=exclude,
+            id_column="wallet_id",
         ),
         TortoiseWalletStatisticAllRepository().bulk_update(
-            wallet_stats_all, excluded_fields=exclude, id_column="wallet_id"
+            wallet_stats_all,
+            excluded_fields=exclude,
+            id_column="wallet_id",
         ),
         TortoiseWalletDetailRepository().bulk_update(
             wallets_details,
@@ -247,7 +268,11 @@ async def _update_wallets(wallets):
         #     last_stats_check=now()
         # ),
         TortoiseWalletRepository().bulk_update(
-            wallets, fields=["first_activity_timestamp", "last_stats_check"]
+            wallets,
+            fields=[
+                "first_activity_timestamp",
+                "last_stats_check",
+            ],
         ),
     )
     elapsed_time = now() - start
@@ -271,13 +296,13 @@ async def recalculate_wallet_stats(wallet, all_tokens):
         elif period == 30:
             stats = wallet.stats_30d
         else:
-            if not wallet.need_update_stats_all:
+            if not wallet.is_need_update_stats_all:
                 continue
             stats = wallet.stats_all
         token_stats = await filter_period_tokens(all_tokens, period, current_datetime)
         await recalculate_wallet_period_stats(stats, token_stats)
 
-    if wallet.need_update_stats_all:
+    if wallet.is_need_update_stats_all:
         wallet_details = wallet.details
         wallet_details.is_scammer = determine_scammer_status(wallet)
         wallet_details.is_bot = determine_bot_status(wallet)
@@ -286,7 +311,10 @@ async def recalculate_wallet_stats(wallet, all_tokens):
     s_tkns = [token for token in all_tokens if token.first_sell_timestamp]
     fb_timestamp = (
         datetime.fromtimestamp(
-            min(b_tkns, key=lambda x: x.first_buy_timestamp).first_buy_timestamp,
+            min(
+                b_tkns,
+                key=lambda x: x.first_buy_timestamp,
+            ).first_buy_timestamp,
             tz=timezone.utc,
         )
         if b_tkns
@@ -295,7 +323,10 @@ async def recalculate_wallet_stats(wallet, all_tokens):
 
     fs_timestamp = (
         datetime.fromtimestamp(
-            min(s_tkns, key=lambda x: x.first_sell_timestamp).first_sell_timestamp,
+            min(
+                s_tkns,
+                key=lambda x: x.first_sell_timestamp,
+            ).first_sell_timestamp,
             tz=timezone.utc,
         )
         if s_tkns
@@ -306,33 +337,25 @@ async def recalculate_wallet_stats(wallet, all_tokens):
     if fb_timestamp and fs_timestamp:
         first_activity_timestamp = min(fb_timestamp, fs_timestamp)
     else:
-        first_activity_timestamp = (
-            fb_timestamp or fs_timestamp
-        )  # Берем первое ненулевое значение
+        first_activity_timestamp = fb_timestamp or fs_timestamp  # Берем первое ненулевое значение
 
     first_activity_timestamp_in_db = wallet.first_activity_timestamp
     if first_activity_timestamp and (
-        first_activity_timestamp_in_db is None
-        or first_activity_timestamp < first_activity_timestamp_in_db
+        first_activity_timestamp_in_db is None or first_activity_timestamp < first_activity_timestamp_in_db
     ):
         wallet.first_activity_timestamp = first_activity_timestamp
 
 
-def determine_scammer_status(wallet: Wallet) -> bool:
+def determine_scammer_status(
+    wallet: Wallet,
+) -> bool:
     """Определяем статус скамера"""
     stats_all: WalletStatisticAllEntity | None = wallet.stats_all
     # Если у кошелька более 5 токенов и процент "с продажей без покупки" больше N - помечаем как скамера
-    if (
-        stats_all.total_token >= 5
-        and stats_all.token_sell_without_buy / stats_all.total_token >= 0.21
-    ):
+    if stats_all.total_token >= 5 and stats_all.token_sell_without_buy / stats_all.total_token >= 0.21:
         return True
     # Если у кошелька более 5 токенов и процент продано>куплено больше N - помечаем как скамера
-    if (
-        stats_all.total_token >= 5
-        and stats_all.token_with_sell_amount_gt_buy_amount / stats_all.total_token
-        >= 0.21
-    ):
+    if stats_all.total_token >= 5 and stats_all.token_with_sell_amount_gt_buy_amount / stats_all.total_token >= 0.21:
         return True
     # Если у кошелька более 1 акктивности с 3+ трейдерами в одной транзе - помечаем его как скамера
     if stats_all.total_swaps_from_txs_with_mt_3_swappers > 0:
@@ -341,16 +364,14 @@ def determine_scammer_status(wallet: Wallet) -> bool:
     return False
 
 
-def determine_bot_status(wallet: WalletEntity) -> bool:
+def determine_bot_status(
+    wallet: WalletEntity,
+) -> bool:
     """Определяем статус арбитраж-бота"""
     stats_all: WalletStatisticAllEntity | None = wallet.stats_all
     # Если у кошелька более 50% активностей помечены как арбитражные - помечаем его как арбитраж-бота
     if stats_all.total_buys_and_sales_count > 0:
-        if (
-            stats_all.total_swaps_from_arbitrage_swap_events
-            / stats_all.total_buys_and_sales_count
-            >= 0.5
-        ):
+        if stats_all.total_swaps_from_arbitrage_swap_events / stats_all.total_buys_and_sales_count >= 0.5:
             return True
     # Токенов >= N и среднее время покупки-продажи <= X секунд
     if stats_all.total_token >= 500:
@@ -409,7 +430,11 @@ async def log_statistics(
         )
     )
 
-    return total_wallets_processed, total_tokens_processed, total_elapsed_time
+    return (
+        total_wallets_processed,
+        total_tokens_processed,
+        total_elapsed_time,
+    )
 
 
 async def process_update_wallet_statistics():
@@ -425,7 +450,10 @@ async def process_update_wallet_statistics():
         while True:
             start = datetime.now()
             # Получаем кошельки для обновления из БД
-            await receive_wallets_from_db(received_wallets_queue, count=wallets_count)
+            await receive_wallets_from_db(
+                received_wallets_queue,
+                count=wallets_count,
+            )
             # Запускаем обработку кошельков
             async with asyncio.TaskGroup() as tg:
                 tg.create_task(
@@ -437,26 +465,33 @@ async def process_update_wallet_statistics():
                     )
                 )
                 calc_task = tg.create_task(
-                    calculate_wallets(fetched_wallets_queue, calculated_wallets_queue)
+                    calculate_wallets(
+                        fetched_wallets_queue,
+                        calculated_wallets_queue,
+                    )
                 )
                 tg.create_task(
                     update_wallets(
-                        calculated_wallets_queue, batch_size=5000, max_parallel=3
+                        calculated_wallets_queue,
+                        batch_size=5000,
+                        max_parallel=3,
                     )
                 )
             end = datetime.now()
             tokens_count = calc_task.result()
             elapsed_time = (end - start).total_seconds()
 
-            total_wallets_processed, total_tokens_processed, total_elapsed_time = (
-                await log_statistics(
-                    wallets_count,
-                    tokens_count,
-                    elapsed_time,
-                    total_wallets_processed,
-                    total_tokens_processed,
-                    total_elapsed_time,
-                )
+            (
+                total_wallets_processed,
+                total_tokens_processed,
+                total_elapsed_time,
+            ) = await log_statistics(
+                wallets_count,
+                tokens_count,
+                elapsed_time,
+                total_wallets_processed,
+                total_tokens_processed,
+                total_elapsed_time,
             )
     finally:
         await Tortoise.close_connections()

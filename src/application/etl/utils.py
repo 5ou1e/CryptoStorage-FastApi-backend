@@ -17,18 +17,22 @@ async def filter_period_tokens(all_tokens, period, current_datetime) -> list:
     period_tokens = []
     for token in all_tokens:
         fb_datetime = (
-            datetime.fromtimestamp(int(token.first_buy_timestamp), tz=pytz.UTC)
+            datetime.fromtimestamp(
+                int(token.first_buy_timestamp),
+                tz=pytz.UTC,
+            )
             if token.first_buy_timestamp
             else None
         )
         fs_datetime = (
-            datetime.fromtimestamp(int(token.first_sell_timestamp), tz=pytz.UTC)
+            datetime.fromtimestamp(
+                int(token.first_sell_timestamp),
+                tz=pytz.UTC,
+            )
             if token.first_sell_timestamp
             else None
         )
-        if (fb_datetime and fb_datetime >= threshold_date) and (
-            fs_datetime is None or fs_datetime >= threshold_date
-        ):
+        if (fb_datetime and fb_datetime >= threshold_date) and (fs_datetime is None or fs_datetime >= threshold_date):
             period_tokens.append(token)
         elif fs_datetime and fs_datetime >= threshold_date:
             period_tokens.append(token)
@@ -69,12 +73,8 @@ async def recalculate_wallet_period_stats(stats, token_stats):
         total_token_sell_amount_usd += token.total_sell_amount_usd
         total_profit_usd += token.total_profit_usd if token.total_profit_usd else 0
 
-        total_swaps_from_txs_with_mt_3_swappers += (
-            token.total_swaps_from_txs_with_mt_3_swappers
-        )
-        total_swaps_from_arbitrage_swap_events += (
-            token.total_swaps_from_arbitrage_swap_events
-        )
+        total_swaps_from_txs_with_mt_3_swappers += token.total_swaps_from_txs_with_mt_3_swappers
+        total_swaps_from_arbitrage_swap_events += token.total_swaps_from_arbitrage_swap_events
 
         if token.total_buys_count > 0:
             token_with_buy += 1
@@ -128,35 +128,23 @@ async def recalculate_wallet_period_stats(stats, token_stats):
     stats.token_buy_without_sell = token_buy_without_sell
     stats.token_sell_without_buy = token_sell_without_buy
     stats.token_with_sell_amount_gt_buy_amount = token_with_sell_amount_gt_buy_amount
-    stats.total_swaps_from_txs_with_mt_3_swappers = (
-        total_swaps_from_txs_with_mt_3_swappers
-    )
-    stats.total_swaps_from_arbitrage_swap_events = (
-        total_swaps_from_arbitrage_swap_events
-    )
+    stats.total_swaps_from_txs_with_mt_3_swappers = total_swaps_from_txs_with_mt_3_swappers
+    stats.total_swaps_from_arbitrage_swap_events = total_swaps_from_arbitrage_swap_events
 
     stats.total_profit_multiplier = (
-        stats.total_profit_usd / stats.total_token_buy_amount_usd * 100
-        if stats.total_token_buy_amount_usd
-        else None
+        stats.total_profit_usd / stats.total_token_buy_amount_usd * 100 if stats.total_token_buy_amount_usd else None
     )  # Только для токенов у которых была покупка!
 
     stats.token_avg_buy_amount = (
-        stats.total_token_buy_amount_usd / stats.token_with_buy
-        if stats.token_with_buy
-        else None
+        stats.total_token_buy_amount_usd / stats.token_with_buy if stats.token_with_buy else None
     )
 
     stats.token_first_buy_avg_price_usd = (
-        sum(token_first_buy_price_values) / stats.token_with_buy
-        if stats.token_with_buy
-        else None
+        sum(token_first_buy_price_values) / stats.token_with_buy if stats.token_with_buy else None
     )
 
     stats.token_first_buy_median_price_usd = (
-        statistics.median(token_first_buy_price_values)
-        if token_first_buy_price_values
-        else None
+        statistics.median(token_first_buy_price_values) if token_first_buy_price_values else None
     )
 
     stats.token_avg_profit_usd = (
@@ -164,9 +152,7 @@ async def recalculate_wallet_period_stats(stats, token_stats):
     )  # Только для токенов у которых была покупка!
 
     stats.winrate = (
-        profitable_tokens_count / stats.token_with_buy * 100
-        if stats.token_with_buy
-        else None
+        profitable_tokens_count / stats.token_with_buy * 100 if stats.token_with_buy else None
     )  # Только для токенов у которых была покупка!
 
     stats.token_buy_sell_duration_avg = (
@@ -176,24 +162,16 @@ async def recalculate_wallet_period_stats(stats, token_stats):
     )
 
     stats.token_buy_sell_duration_median = (
-        statistics.median(token_first_buy_sell_duration_values)
-        if token_first_buy_sell_duration_values
-        else None
+        statistics.median(token_first_buy_sell_duration_values) if token_first_buy_sell_duration_values else None
     )
 
     stats.token_median_buy_amount = (
-        statistics.median(token_buy_amount_usd_values)
-        if token_buy_amount_usd_values
-        else None
+        statistics.median(token_buy_amount_usd_values) if token_buy_amount_usd_values else None
     )
 
     if stats.token_with_buy:
-        stats.pnl_lt_minus_dot5_percent = (
-            stats.pnl_lt_minus_dot5_num / stats.token_with_buy * 100
-        )
-        stats.pnl_minus_dot5_0x_percent = (
-            stats.pnl_minus_dot5_0x_num / stats.token_with_buy * 100
-        )
+        stats.pnl_lt_minus_dot5_percent = stats.pnl_lt_minus_dot5_num / stats.token_with_buy * 100
+        stats.pnl_minus_dot5_0x_percent = stats.pnl_minus_dot5_0x_num / stats.token_with_buy * 100
         stats.pnl_lt_2x_percent = stats.pnl_lt_2x_num / stats.token_with_buy * 100
         stats.pnl_2x_5x_percent = stats.pnl_2x_5x_num / stats.token_with_buy * 100
         stats.pnl_gt_5x_percent = stats.pnl_gt_5x_num / stats.token_with_buy * 100

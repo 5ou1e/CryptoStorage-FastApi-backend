@@ -18,9 +18,14 @@ from src.infra.db.repositories.tortoise import (
     TortoiseWalletStatisticBuyPriceGt15k30dRepository,
     TortoiseWalletStatisticBuyPriceGt15kAllRepository,
 )
-from src.infra.db.setup_tortoise import init_db_async
+from src.infra.db.setup_tortoise import (
+    init_db_async,
+)
 
-from .utils import filter_period_tokens, recalculate_wallet_period_stats
+from .utils import (
+    filter_period_tokens,
+    recalculate_wallet_period_stats,
+)
 
 logger = logging.getLogger("tasks.update_wallet_statistics")
 
@@ -98,12 +103,8 @@ async def update_wallet_stats_in_db(wallets):
     wallet_stats_all = [wallet._stats_buy_price_gt_15k_all for wallet in wallets]
     await asyncio.gather(
         TortoiseWalletStatisticBuyPriceGt15k7dRepository().bulk_update(wallet_stats_7d),
-        TortoiseWalletStatisticBuyPriceGt15k30dRepository().bulk_update(
-            wallet_stats_30d
-        ),
-        TortoiseWalletStatisticBuyPriceGt15kAllRepository().bulk_update(
-            wallet_stats_all
-        ),
+        TortoiseWalletStatisticBuyPriceGt15k30dRepository().bulk_update(wallet_stats_30d),
+        TortoiseWalletStatisticBuyPriceGt15kAllRepository().bulk_update(wallet_stats_all),
     )
     logger.debug(f"Обновили статистики кошельков за периоды")
 
@@ -128,9 +129,7 @@ async def calculate_wallet(wallet, semaphore):
             total_buy_amount_usd__gte=200,
         ).all()
         wallet_token_stats_count = len(wallet_token_stats)
-        logger.debug(
-            f"Получили токен-статы кошелька {wallet.address}, всего - {wallet_token_stats_count}"
-        )
+        logger.debug(f"Получили токен-статы кошелька {wallet.address}, всего - {wallet_token_stats_count}")
         await recalculate_wallet_stats(wallet, wallet_token_stats)
         logger.debug(f"Посчитали статистику кошелька {wallet.address} в базу")
 

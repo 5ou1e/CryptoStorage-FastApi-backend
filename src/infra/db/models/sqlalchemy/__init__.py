@@ -1,5 +1,8 @@
 from .base import Base
-from .external_services import FlipsideCryptoAccount, FlipsideCryptoConfig
+from .external_services import (
+    FlipsideCryptoAccount,
+    FlipsideCryptoConfig,
+)
 from .swap import Swap
 from .token import Token, TokenPrice
 from .user import User

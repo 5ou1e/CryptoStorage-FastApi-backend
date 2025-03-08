@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from src.domain.entities.base_entity import BaseEntity, TimestampMixinEntity
+from src.domain.entities.base_entity import (
+    BaseEntity,
+    TimestampMixinEntity,
+)
 
 
 @dataclass(kw_only=True)
@@ -24,5 +27,9 @@ class UserEntity(BaseEntity, TimestampMixinEntity):
         email: str,
         hashed_password: str,
     ) -> "UserEntity":
-        user = cls(username=username, email=email, hashed_password=hashed_password)
+        user = cls(
+            username=username,
+            email=email,
+            hashed_password=hashed_password,
+        )
         return user

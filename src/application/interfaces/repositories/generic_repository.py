@@ -1,8 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeAlias, TypeVar
+from typing import (
+    Any,
+    Generic,
+    TypeAlias,
+    TypeVar,
+)
 from uuid import UUID
 
-from src.domain.entities.base_entity import BaseEntity
+from src.domain.entities.base_entity import (
+    BaseEntity,
+)
 
 Entity = TypeVar("Entity", bound=BaseEntity)
 
@@ -26,7 +33,7 @@ class BaseGenericRepository(Generic[Entity], ABC):
     async def get_page(
         self,
         page: int = 1,
-        per_page: int = 10,
+        page_size: int = 10,
     ) -> list[Entity]:
         raise NotImplementedError
 

@@ -1,14 +1,24 @@
 from src.application.common.dto import Pagination
-from src.application.common.utils import create_paginated_response
-from src.application.interfaces.repositories.swap import BaseSwapRepository
-from src.application.interfaces.repositories.wallet import BaseWalletRepository
-from src.application.interfaces.uow import BaseUnitOfWork
+from src.application.common.utils import (
+    create_paginated_response,
+)
+from src.application.interfaces.repositories.swap import (
+    BaseSwapRepository,
+)
+from src.application.interfaces.repositories.wallet import (
+    BaseWalletRepository,
+)
+from src.application.interfaces.uow import (
+    BaseUnitOfWork,
+)
 from src.application.wallet.dto import (
     GetWalletActivitiesFilters,
     WalletActivityDTO,
     WalletActivityPageDTO,
 )
-from src.application.wallet.exceptions import WalletNotFoundException
+from src.application.wallet.exceptions import (
+    WalletNotFoundException,
+)
 
 
 class GetWalletActivitiesHandler:
@@ -33,14 +43,12 @@ class GetWalletActivitiesHandler:
         filter_by["wallet_id"] = wallet.id
         activities = await self._swap_repository.get_page(
             page=pagination.page,
-            per_page=pagination.per_page,
+            page_size=pagination.page_size,
         )
         total_count = await self._swap_repository.get_count(
             # filter_by=filter_by
         )
-        wallet_activities_response = [
-            WalletActivityDTO.from_orm(activity) for activity in activities
-        ]
+        wallet_activities_response = [WalletActivityDTO.from_orm(activity) for activity in activities]
         return create_paginated_response(
             data=wallet_activities_response,
             total_count=total_count,

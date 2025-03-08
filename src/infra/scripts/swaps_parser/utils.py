@@ -42,11 +42,7 @@ def populate_swaps_data(mapped_swaps: dict):
                             swap["is_part_of_arbitrage_swap_event"] = True
             elif swappers_count == 2:
                 if okx_wallet in swappers_list:
-                    real_swapper = (
-                        swappers_list[0]
-                        if swappers_list[1] == okx_wallet
-                        else swappers_list[1]
-                    )
+                    real_swapper = swappers_list[0] if swappers_list[1] == okx_wallet else swappers_list[1]
                     for swap in _swaps:
                         swap["swapper"] = real_swapper
             elif swappers_count >= 3:
@@ -84,7 +80,8 @@ def combine_swaps(swaps: list[dict], swaps_jupiter: list[dict]):
 
 
 def filter_swaps(
-    swaps: list, blacklisted_tokens: List[str] | None = None
+    swaps: list,
+    blacklisted_tokens: List[str] | None = None,
 ) -> list[dict]:
     """Отфильтровывает неподходящие активности"""
     blacklisted_tokens = blacklisted_tokens or []
@@ -154,10 +151,12 @@ def extract_and_build_objects(
             cost_usd=cost_usd,
             price_usd=price_usd,
             is_part_of_transaction_with_mt_3_swappers=swap.get(
-                "is_part_of_transaction_with_mt_3_swappers", False
+                "is_part_of_transaction_with_mt_3_swappers",
+                False,
             ),
             is_part_of_arbitrage_swap_event=swap.get(
-                "is_part_of_arbitrage_swap_event", False
+                "is_part_of_arbitrage_swap_event",
+                False,
             ),
         )
         activity.wallet_address = wallet_address
@@ -181,10 +180,19 @@ def split_time_range(start_time, end_time, parts):
     """Разбивает временной промежуток на равные части"""
     delta = (end_time - start_time) / parts
     intervals = [
-        (start_time + i * delta, start_time + (i + 1) * delta) for i in range(parts - 1)
+        (
+            start_time + i * delta,
+            start_time + (i + 1) * delta,
+        )
+        for i in range(parts - 1)
     ]
     # Добавляем последний интервал, чтобы гарантировать точное совпадение с end_time
-    intervals.append((start_time + (parts - 1) * delta, end_time))
+    intervals.append(
+        (
+            start_time + (parts - 1) * delta,
+            end_time,
+        )
+    )
     return intervals
 
 
@@ -212,6 +220,9 @@ def create_wallets_relations(wallets):
         )
         wallet_stats_all.append(_wallet_stats_all)
 
-    return wallet_details, wallet_stats_7d, wallet_stats_30d, wallet_stats_all
-
-
+    return (
+        wallet_details,
+        wallet_stats_7d,
+        wallet_stats_30d,
+        wallet_stats_all,
+    )

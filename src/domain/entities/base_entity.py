@@ -8,22 +8,18 @@ from mashumaro.types import SerializationStrategy
 
 class TsSerializationStrategy(SerializationStrategy, use_annotations=False):
     def serialize(self, value: datetime) -> datetime:
+        """Для сериализации datetime -> datetime а не в str"""
         return value
-
-    # def deserialize(self, value: float) -> datetime:
-    #     # value will be converted to float before being passed to this method
-    #     return datetime.fromtimestamp(value)
 
 
 @dataclass
 class BaseEntity(ABC):
-    """Абстрактный класс Entity"""
+    """Базовый класс Entity"""
 
     class Config:
         serialization_strategy = {
             datetime: TsSerializationStrategy(),
         }
-
 
 
 @dataclass(kw_only=True)

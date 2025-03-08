@@ -42,7 +42,9 @@ async def get_flipside_config():
     return await FlipsideCryptoConfig.first()
 
 
-async def set_flipside_account_inactive(flipside_account):
+async def set_flipside_account_inactive(
+    flipside_account,
+):
     flipside_account.is_active = False
     await flipside_account.save()
 
@@ -60,7 +62,9 @@ async def get_sol_prices(
     if not sol_token:
         raise ValueError(f"Токен WSOL не найден в БД!")
     _sol_prices = await TokenPrice.filter(
-        token=sol_token, minute__gte=minute_from, minute__lte=minute_to
+        token=sol_token,
+        minute__gte=minute_from,
+        minute__lte=minute_to,
     ).all()
     sol_prices = {price.minute: price.price_usd for price in _sol_prices}
     return sol_prices
@@ -90,15 +94,16 @@ async def bulk_create_parallel(
 
 
 async def import_wallets(wallets, chunks_count=10) -> dict:
-    await bulk_create_parallel(WalletRepository, wallets, chunks_count=chunks_count)
+    await bulk_create_parallel(
+        WalletRepository,
+        wallets,
+        chunks_count=chunks_count,
+    )
     wallet_repository = WalletRepository()
     created_addresses = list({wallet.address for wallet in wallets})
     # Разбиваем список адресов на части, если их больше, чем PostgreSQL позволяет в одном запросе
     batch_size = 30000
-    id_batches = [
-        created_addresses[i : i + batch_size]
-        for i in range(0, len(created_addresses), batch_size)
-    ]
+    id_batches = [created_addresses[i : i + batch_size] for i in range(0, len(created_addresses), batch_size)]
     wallets_map = {}
     for batch in id_batches:
         res = await Wallet.in_bulk(batch, "address")
@@ -120,10 +125,7 @@ async def import_tokens(tokens, chunks_count=10) -> dict:
     created_addresses = list({token.address for token in tokens})
     # Разбиваем список адресов на части, если их больше, чем PostgreSQL позволяет в одном запросе
     batch_size = 30000  # или другое значение, подходящее для вашей базы
-    id_batches = [
-        created_addresses[i : i + batch_size]
-        for i in range(0, len(created_addresses), batch_size)
-    ]
+    id_batches = [created_addresses[i : i + batch_size] for i in range(0, len(created_addresses), batch_size)]
     tokens_map = {}
     for batch in id_batches:
         res = await Token.in_bulk(batch, "address")
@@ -132,37 +134,45 @@ async def import_tokens(tokens, chunks_count=10) -> dict:
 
 
 async def create_wallet_details(records: List[Model], chunks_count: int = 10) -> None:
-    await bulk_create_parallel(WalletDetailRepository, records, chunks_count)
+    await bulk_create_parallel(
+        WalletDetailRepository,
+        records,
+        chunks_count,
+    )
 
 
 async def update_wallets(records: List[Model], chunks_count: int = 10) -> None:
     chunks = np.array_split(records, chunks_count)
     await asyncio.gather(
         *[
-            WalletRepository().bulk_update_last_activity_timestamp(
-                objects=chunks[i].tolist()
-            )
+            WalletRepository().bulk_update_last_activity_timestamp(objects=chunks[i].tolist())
             for i in range(chunks_count)
         ]
     )
 
 
-async def create_wallet_statistics_7d(
-    records: List[Model], chunks_count: int = 5
-) -> None:
-    await bulk_create_parallel(WalletStatistic7dRepository, records, chunks_count)
+async def create_wallet_statistics_7d(records: List[Model], chunks_count: int = 5) -> None:
+    await bulk_create_parallel(
+        WalletStatistic7dRepository,
+        records,
+        chunks_count,
+    )
 
 
-async def create_wallet_statistics_30d(
-    records: List[Model], chunks_count: int = 5
-) -> None:
-    await bulk_create_parallel(WalletStatistic30dRepository, records, chunks_count)
+async def create_wallet_statistics_30d(records: List[Model], chunks_count: int = 5) -> None:
+    await bulk_create_parallel(
+        WalletStatistic30dRepository,
+        records,
+        chunks_count,
+    )
 
 
-async def create_wallet_statistics_all(
-    records: List[Model], chunks_count: int = 5
-) -> None:
-    await bulk_create_parallel(WalletStatisticAllRepository, records, chunks_count)
+async def create_wallet_statistics_all(records: List[Model], chunks_count: int = 5) -> None:
+    await bulk_create_parallel(
+        WalletStatisticAllRepository,
+        records,
+        chunks_count,
+    )
 
 
 async def import_activities(activities: List[Model], chunks_count: int = 5) -> None:
@@ -176,7 +186,10 @@ async def load_wallet_tokens(token_wallet_list, chunks_count: int = 5) -> list[M
         for item in token_wallet_list_:
             token_wallet_ids[item["token_id"]].append(item["wallet_id"])
         all_wt_stats = []
-        for token_id, wallet_ids in token_wallet_ids.items():
+        for (
+            token_id,
+            wallet_ids,
+        ) in token_wallet_ids.items():
             existing_wallet_token_stats = await WalletToken.filter(
                 token_id=token_id,
                 wallet_id__in=wallet_ids,
@@ -186,16 +199,15 @@ async def load_wallet_tokens(token_wallet_list, chunks_count: int = 5) -> list[M
         return all_wt_stats
 
     token_wallet_list_chunks = np.array_split(token_wallet_list, chunks_count)
-    results = await asyncio.gather(
-        *[_load(token_wallet_list_chunks[i]) for i in range(chunks_count)]
-    )
+    results = await asyncio.gather(*[_load(token_wallet_list_chunks[i]) for i in range(chunks_count)])
     return list(chain(*results))
 
 
-async def import_wallet_tokens(wallet_token_records: List[Model], chunks_count=5):
-    fields_to_update = (
-        WalletToken._meta.db_fields.copy()
-    )  # Обязательно .copy(), чтобы не менять исходный set
+async def import_wallet_tokens(
+    wallet_token_records: List[Model],
+    chunks_count=5,
+):
+    fields_to_update = WalletToken._meta.db_fields.copy()  # Обязательно .copy(), чтобы не менять исходный set
     fields_to_update.remove("id")
     fields_to_update.remove("created_at")
     await bulk_create_parallel(

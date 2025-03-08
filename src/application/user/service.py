@@ -3,14 +3,34 @@ from typing import Any, Optional, TypeVar, Union
 
 import jwt
 from fastapi import Request, Response
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi_users import BaseUserManager, models, schemas
-from fastapi_users.jwt import SecretType, decode_jwt, generate_jwt
-from fastapi_users.password import PasswordHelper, PasswordHelperProtocol
+from fastapi.security import (
+    OAuth2PasswordRequestForm,
+)
+from fastapi_users import (
+    BaseUserManager,
+    models,
+    schemas,
+)
+from fastapi_users.jwt import (
+    SecretType,
+    decode_jwt,
+    generate_jwt,
+)
+from fastapi_users.password import (
+    PasswordHelper,
+    PasswordHelperProtocol,
+)
 
-from src.application.interfaces.repositories.user import BaseUserRepository
-from src.application.user.dto import UserCreate, UserUpdate
-from src.domain.entities.base_entity import BaseEntity
+from src.application.interfaces.repositories.user import (
+    BaseUserRepository,
+)
+from src.application.user.dto import (
+    UserCreate,
+    UserUpdate,
+)
+from src.domain.entities.base_entity import (
+    BaseEntity,
+)
 from src.domain.entities.user import UserEntity
 
 from .exceptions import (
@@ -204,9 +224,7 @@ class UserService(IntegerIDMixin):
                 user = await self.get_by_email(account_email)
                 if not associate_by_email:
                     raise UserAlreadyExistsException(email=account_email)
-                user = await self.user_repository.add_oauth_account(
-                    user, oauth_account_dict
-                )
+                user = await self.user_repository.add_oauth_account(user, oauth_account_dict)
             except UserDoesNotExistsException:
                 # Create account
                 password = self.password_helper.generate()
@@ -216,19 +234,16 @@ class UserService(IntegerIDMixin):
                     "is_verified": is_verified_by_default,
                 }
                 user = await self.user_repository.create(user_dict)
-                user = await self.user_repository.add_oauth_account(
-                    user, oauth_account_dict
-                )
+                user = await self.user_repository.add_oauth_account(user, oauth_account_dict)
                 await self.on_after_register(user, request)
         else:
             # Update oauth
             for existing_oauth_account in user.oauth_accounts:
-                if (
-                    existing_oauth_account.account_id == account_id
-                    and existing_oauth_account.oauth_name == oauth_name
-                ):
+                if existing_oauth_account.account_id == account_id and existing_oauth_account.oauth_name == oauth_name:
                     user = await self.user_repository.update_oauth_account(
-                        user, existing_oauth_account, oauth_account_dict
+                        user,
+                        existing_oauth_account,
+                        oauth_account_dict,
                     )
 
         return user
@@ -276,7 +291,9 @@ class UserService(IntegerIDMixin):
         return user
 
     async def request_verify(
-        self, user: UserEntity, request: Optional[Request] = None
+        self,
+        user: UserEntity,
+        request: Optional[Request] = None,
     ) -> None:
         """
         Start a verification request.
@@ -306,7 +323,11 @@ class UserService(IntegerIDMixin):
         )
         await self.on_after_request_verify(user, token, request)
 
-    async def verify(self, token: str, request: Optional[Request] = None) -> UserEntity:
+    async def verify(
+        self,
+        token: str,
+        request: Optional[Request] = None,
+    ) -> UserEntity:
         """
         Validate a verification request.
 
@@ -359,7 +380,9 @@ class UserService(IntegerIDMixin):
         return verified_user
 
     async def forgot_password(
-        self, user: UserEntity, request: Optional[Request] = None
+        self,
+        user: UserEntity,
+        request: Optional[Request] = None,
     ) -> None:
         """
         Start a forgot password request.
@@ -387,7 +410,10 @@ class UserService(IntegerIDMixin):
         await self.on_after_forgot_password(user, token, request)
 
     async def reset_password(
-        self, token: str, password: str, request: Optional[Request] = None
+        self,
+        token: str,
+        password: str,
+        request: Optional[Request] = None,
     ) -> UserEntity:
         """
         Reset the password of a user.
@@ -426,7 +452,8 @@ class UserService(IntegerIDMixin):
         user = await self.get(parsed_id)
 
         valid_password_fingerprint, _ = self.password_helper.verify_and_update(
-            user.hashed_password, password_fingerprint
+            user.hashed_password,
+            password_fingerprint,
         )
         if not valid_password_fingerprint:
             raise InvalidResetPasswordTokenException(token)
@@ -466,7 +493,11 @@ class UserService(IntegerIDMixin):
         else:
             updated_user_data = user_update.create_update_dict_superuser()
         updated_user = await self._update(user, updated_user_data)
-        await self.on_after_update(updated_user, updated_user_data, request)
+        await self.on_after_update(
+            updated_user,
+            updated_user_data,
+            request,
+        )
         return updated_user
 
     async def delete(
@@ -486,7 +517,9 @@ class UserService(IntegerIDMixin):
         await self.on_after_delete(user, request)
 
     async def validate_password(
-        self, password: str, user: Union[UserCreate, UserEntity]
+        self,
+        password: str,
+        user: Union[UserCreate, UserEntity],
     ) -> None:
         """
         Validate a password.
@@ -501,7 +534,9 @@ class UserService(IntegerIDMixin):
         return  # pragma: no cover
 
     async def on_after_register(
-        self, user: UserEntity, request: Optional[Request] = None
+        self,
+        user: UserEntity,
+        request: Optional[Request] = None,
     ) -> None:
         """
         Perform logic after successful user registration.
@@ -533,7 +568,10 @@ class UserService(IntegerIDMixin):
         return  # pragma: no cover
 
     async def on_after_request_verify(
-        self, user: UserEntity, token: str, request: Optional[Request] = None
+        self,
+        user: UserEntity,
+        token: str,
+        request: Optional[Request] = None,
     ) -> None:
         """
         Perform logic after successful verification request.
@@ -548,7 +586,9 @@ class UserService(IntegerIDMixin):
         return  # pragma: no cover
 
     async def on_after_verify(
-        self, user: UserEntity, request: Optional[Request] = None
+        self,
+        user: UserEntity,
+        request: Optional[Request] = None,
     ) -> None:
         """
         Perform logic after successful user verification.
@@ -562,7 +602,10 @@ class UserService(IntegerIDMixin):
         return  # pragma: no cover
 
     async def on_after_forgot_password(
-        self, user: UserEntity, token: str, request: Optional[Request] = None
+        self,
+        user: UserEntity,
+        token: str,
+        request: Optional[Request] = None,
     ) -> None:
         """
         Perform logic after successful forgot password request.
@@ -577,7 +620,9 @@ class UserService(IntegerIDMixin):
         return  # pragma: no cover
 
     async def on_after_reset_password(
-        self, user: UserEntity, request: Optional[Request] = None
+        self,
+        user: UserEntity,
+        request: Optional[Request] = None,
     ) -> None:
         """
         Perform logic after successful password reset.
@@ -609,7 +654,9 @@ class UserService(IntegerIDMixin):
         return  # pragma: no cover
 
     async def on_before_delete(
-        self, user: UserEntity, request: Optional[Request] = None
+        self,
+        user: UserEntity,
+        request: Optional[Request] = None,
     ) -> None:
         """
         Perform logic before user delete.
@@ -623,7 +670,9 @@ class UserService(IntegerIDMixin):
         return  # pragma: no cover
 
     async def on_after_delete(
-        self, user: UserEntity, request: Optional[Request] = None
+        self,
+        user: UserEntity,
+        request: Optional[Request] = None,
     ) -> None:
         """
         Perform logic before user delete.
@@ -637,7 +686,8 @@ class UserService(IntegerIDMixin):
         return  # pragma: no cover
 
     async def authenticate(
-        self, credentials: OAuth2PasswordRequestForm
+        self,
+        credentials: OAuth2PasswordRequestForm,
     ) -> Optional[UserEntity]:
         """
         Authenticate and return a user following an email and a password.
@@ -655,20 +705,24 @@ class UserService(IntegerIDMixin):
             return None
 
         verified, updated_password_hash = self.password_helper.verify_and_update(
-            credentials.password, user.hashed_password
+            credentials.password,
+            user.hashed_password,
         )
         if not verified:
             return None
         # Update password hash to a more robust one if needed
         if updated_password_hash is not None:
             await self.user_repository.update(
-                user, {"hashed_password": updated_password_hash}
+                user,
+                {"hashed_password": updated_password_hash},
             )
 
         return user
 
     async def _update(
-        self, user: UserEntity, update_dict: dict[str, Any]
+        self,
+        user: UserEntity,
+        update_dict: dict[str, Any],
     ) -> UserEntity:
         validated_update_dict = {}
         for field, value in update_dict.items():
@@ -681,9 +735,7 @@ class UserService(IntegerIDMixin):
                     validated_update_dict["is_verified"] = False
             elif field == "password" and value is not None:
                 await self.validate_password(value, user)
-                validated_update_dict["hashed_password"] = self.password_helper.hash(
-                    value
-                )
+                validated_update_dict["hashed_password"] = self.password_helper.hash(value)
             else:
                 validated_update_dict[field] = value
         return await self.user_repository.update(user, validated_update_dict)

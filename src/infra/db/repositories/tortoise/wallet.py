@@ -39,68 +39,81 @@ from src.infra.db.models.tortoise import (
     WalletToken,
 )
 
-from .generic_repository import TortoiseGenericRepository
+from .generic_repository import (
+    TortoiseGenericRepository,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class TortoiseWalletDetailRepository(
-    TortoiseGenericRepository, BaseWalletDetailRepository
+    TortoiseGenericRepository,
+    BaseWalletDetailRepository,
 ):
     model_class = WalletDetail
     entity_class = WalletDetailEntity
 
 
 class TortoiseWalletStatistic7dRepository(
-    TortoiseGenericRepository, BaseWalletStatistic7dRepository
+    TortoiseGenericRepository,
+    BaseWalletStatistic7dRepository,
 ):
     model_class = WalletStatistic7d
     entity_class = WalletStatistic7dEntity
 
 
 class TortoiseWalletStatistic30dRepository(
-    TortoiseGenericRepository, BaseWalletStatistic30dRepository
+    TortoiseGenericRepository,
+    BaseWalletStatistic30dRepository,
 ):
     model_class = WalletStatistic30d
     entity_class = WalletStatistic30dEntity
 
 
 class TortoiseWalletStatisticAllRepository(
-    TortoiseGenericRepository, BaseWalletStatisticAllRepository
+    TortoiseGenericRepository,
+    BaseWalletStatisticAllRepository,
 ):
     model_class = WalletStatisticAll
     entity_class = WalletStatisticAllEntity
 
 
 class TortoiseWalletStatisticBuyPriceGt15k7dRepository(
-    TortoiseGenericRepository, BaseWalletStatisticBuyPriceGt15k7dRepository
+    TortoiseGenericRepository,
+    BaseWalletStatisticBuyPriceGt15k7dRepository,
 ):
     model_class = WalletStatisticBuyPriceGt15k7d
     entity_class = WalletStatisticBuyPriceGt15k7dEntity
 
 
 class TortoiseWalletStatisticBuyPriceGt15k30dRepository(
-    TortoiseGenericRepository, BaseWalletStatisticBuyPriceGt15k30dRepository
+    TortoiseGenericRepository,
+    BaseWalletStatisticBuyPriceGt15k30dRepository,
 ):
     model_class = WalletStatisticBuyPriceGt15k30d
     entity_class = WalletStatisticBuyPriceGt15k30dEntity
 
 
 class TortoiseWalletStatisticBuyPriceGt15kAllRepository(
-    TortoiseGenericRepository, BaseWalletStatisticBuyPriceGt15kAllRepository
+    TortoiseGenericRepository,
+    BaseWalletStatisticBuyPriceGt15kAllRepository,
 ):
     model_class = WalletStatisticBuyPriceGt15kAll
     entity_class = WalletStatisticBuyPriceGt15kAllEntity
 
 
 class TortoiseWalletTokenRepository(
-    TortoiseGenericRepository, BaseWalletTokenRepository
+    TortoiseGenericRepository,
+    BaseWalletTokenRepository,
 ):
     model_class = WalletToken
     entity_class = WalletTokenEntity
 
 
-class TortoiseWalletRepository(TortoiseGenericRepository, BaseWalletRepository):
+class TortoiseWalletRepository(
+    TortoiseGenericRepository,
+    BaseWalletRepository,
+):
     model_class = Wallet
     entity_class = WalletEntity
 
@@ -109,9 +122,7 @@ class TortoiseWalletRepository(TortoiseGenericRepository, BaseWalletRepository):
         return await Wallet.filter(address=address).first()
 
     # noinspection PyMethodMayBeStatic
-    async def get_by_address_with_details_and_stats(
-        self, address: str
-    ) -> WalletEntity | None:
+    async def get_by_address_with_details_and_stats(self, address: str) -> WalletEntity | None:
         return (
             await Wallet.filter(address=address)
             .prefetch_related(
@@ -141,9 +152,7 @@ class TortoiseWalletRepository(TortoiseGenericRepository, BaseWalletRepository):
         wallets = (
             await Wallet.filter(
                 wallet_tokens__token__address__in=token_addresses,
-                _token_count__gte=math.ceil(
-                    matching_tokens_percent / 100 * len(token_addresses)
-                ),
+                _token_count__gte=math.ceil(matching_tokens_percent / 100 * len(token_addresses)),
                 **filter_by,
             )
             .annotate(_token_count=Count("wallet_tokens__token_id"))  # , distinct=True

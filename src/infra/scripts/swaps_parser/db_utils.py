@@ -17,13 +17,13 @@ from src.infra.db.models.tortoise import (
     WalletToken,
 )
 from src.infra.db.repositories.tortoise import (
+    TortoiseSwapRepository,
     TortoiseTokenRepository,
     TortoiseWalletDetailRepository,
     TortoiseWalletRepository,
     TortoiseWalletStatistic7dRepository,
     TortoiseWalletStatistic30dRepository,
     TortoiseWalletStatisticAllRepository,
-    TortoiseSwapRepository,
     TortoiseWalletTokenRepository,
 )
 
@@ -39,7 +39,9 @@ async def get_flipside_config():
     return await FlipsideCryptoConfig.first()
 
 
-async def set_flipside_account_inactive(flipside_account):
+async def set_flipside_account_inactive(
+    flipside_account,
+):
     flipside_account.is_active = False
     await flipside_account.save()
 
@@ -57,7 +59,9 @@ async def get_sol_prices(
     if not sol_token:
         raise ValueError(f"Токен WSOL не найден в БД!")
     _sol_prices = await TokenPrice.filter(
-        token=sol_token, minute__gte=minute_from, minute__lte=minute_to
+        token=sol_token,
+        minute__gte=minute_from,
+        minute__lte=minute_to,
     ).all()
     sol_prices = {price.minute: price.price_usd for price in _sol_prices}
     return sol_prices
@@ -66,25 +70,26 @@ async def get_sol_prices(
 async def import_wallets_data(wallets, chunks_count=10) -> list[Wallet]:
     """Создаем кошельки и все их связи в несколько тасков"""
     chunks = np.array_split(wallets, chunks_count)
-    results = await asyncio.gather(
-        *[import_wallets_data_chunk(chunks[i].tolist()) for i in range(chunks_count)]
-    )
+    results = await asyncio.gather(*[import_wallets_data_chunk(chunks[i].tolist()) for i in range(chunks_count)])
     created_wallets = [wallet for result in results for wallet in result]
     return created_wallets
 
 
-async def import_wallets_data_chunk(wallets) -> list[Wallet]:
+async def import_wallets_data_chunk(
+    wallets,
+) -> list[Wallet]:
     """Импортируем кошельки со всеми связями в одной транзакции"""
     repository = TortoiseWalletRepository()
     async with in_transaction() as conn:
         await repository.bulk_create(objects=wallets, ignore_conflicts=True)
         created_addresses = list({wallet.address for wallet in wallets})
-        created_wallets: list[Wallet] = await repository.get_list(
-            filter_by={"address__in": created_addresses}
-        )
-        wallet_details, wallet_stats_7d, wallet_stats_30d, wallet_stats_all = (
-            utils.create_wallets_relations(created_wallets)
-        )
+        created_wallets: list[Wallet] = await repository.get_list(filter_by={"address__in": created_addresses})
+        (
+            wallet_details,
+            wallet_stats_7d,
+            wallet_stats_30d,
+            wallet_stats_all,
+        ) = utils.create_wallets_relations(created_wallets)
         await asyncio.gather(
             TortoiseWalletStatistic7dRepository().bulk_create(wallet_stats_7d),
             TortoiseWalletStatistic30dRepository().bulk_create(wallet_stats_30d),
@@ -96,18 +101,16 @@ async def import_wallets_data_chunk(wallets) -> list[Wallet]:
 
 async def import_tokens(tokens, chunks_count=5) -> list[Token]:
     chunks = np.array_split(tokens, chunks_count)
-    results = await asyncio.gather(
-        *[import_tokens_chunk(chunks[i].tolist()) for i in range(chunks_count)]
-    )
+    results = await asyncio.gather(*[import_tokens_chunk(chunks[i].tolist()) for i in range(chunks_count)])
     return [token for result in results for token in result]
 
 
-async def import_tokens_chunk(tokens) -> list[Token]:
+async def import_tokens_chunk(
+    tokens,
+) -> list[Token]:
     repository = TortoiseTokenRepository()
     await repository.bulk_create(tokens)
-    return await repository.get_list(
-        filter_by={"address__in": [token.address for token in tokens]}
-    )
+    return await repository.get_list(filter_by={"address__in": [token.address for token in tokens]})
 
 
 async def update_wallets(records: List[Model], chunks_count: int = 10) -> None:
@@ -116,14 +119,19 @@ async def update_wallets(records: List[Model], chunks_count: int = 10) -> None:
         *[
             TortoiseWalletRepository().bulk_update(
                 objects=chunks[i].tolist(),
-                fields=["first_activity_timestamp", "last_activity_timestamp"],
+                fields=[
+                    "first_activity_timestamp",
+                    "last_activity_timestamp",
+                ],
             )
             for i in range(chunks_count)
         ]
     )
 
 
-async def import_activities(activities: List[Model]) -> None:
+async def import_activities(
+    activities: List[Model],
+) -> None:
     await TortoiseSwapRepository().bulk_create(activities)
 
 
@@ -134,7 +142,10 @@ async def load_wallet_tokens(token_wallet_list, chunks_count: int = 5) -> list[M
         for item in token_wallet_list_:
             token_wallet_ids[item["token_id"]].append(item["wallet_id"])
         all_wt_stats = []
-        for token_id, wallet_ids in token_wallet_ids.items():
+        for (
+            token_id,
+            wallet_ids,
+        ) in token_wallet_ids.items():
             existing_wallet_token_stats = await WalletToken.filter(
                 token_id=token_id,
                 wallet_id__in=wallet_ids,
@@ -144,16 +155,14 @@ async def load_wallet_tokens(token_wallet_list, chunks_count: int = 5) -> list[M
         return all_wt_stats
 
     token_wallet_list_chunks = np.array_split(token_wallet_list, chunks_count)
-    results = await asyncio.gather(
-        *[_load(token_wallet_list_chunks[i]) for i in range(chunks_count)]
-    )
+    results = await asyncio.gather(*[_load(token_wallet_list_chunks[i]) for i in range(chunks_count)])
     return list(chain(*results))
 
 
-async def import_wallet_tokens(records: List[Model]):
-    fields_to_update = (
-        WalletToken._meta.db_fields.copy()
-    )
+async def import_wallet_tokens(
+    records: List[Model],
+):
+    fields_to_update = WalletToken._meta.db_fields.copy()
     fields_to_update.remove("id")
     fields_to_update.remove("wallet_id")
     fields_to_update.remove("token_id")

@@ -40,68 +40,81 @@ from src.infra.db.models.sqlalchemy import (
     WalletToken,
 )
 
-from .generic_repository import SQLAlchemyGenericRepository
+from .generic_repository import (
+    SQLAlchemyGenericRepository,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class SQLAlchemyWalletDetailRepository(
-    SQLAlchemyGenericRepository, BaseWalletDetailRepository
+    SQLAlchemyGenericRepository,
+    BaseWalletDetailRepository,
 ):
     model_class = WalletDetail
     entity_class = WalletDetailEntity
 
 
 class SQLAlchemyWalletStatistic7dRepository(
-    SQLAlchemyGenericRepository, BaseWalletStatistic7dRepository
+    SQLAlchemyGenericRepository,
+    BaseWalletStatistic7dRepository,
 ):
     model_class = WalletStatistic7d
     entity_class = WalletStatistic7dEntity
 
 
 class SQLAlchemyWalletStatistic30dRepository(
-    SQLAlchemyGenericRepository, BaseWalletStatistic30dRepository
+    SQLAlchemyGenericRepository,
+    BaseWalletStatistic30dRepository,
 ):
     model_class = WalletStatistic30d
     entity_class = WalletStatistic30dEntity
 
 
 class SQLAlchemyWalletStatisticAllRepository(
-    SQLAlchemyGenericRepository, BaseWalletStatisticAllRepository
+    SQLAlchemyGenericRepository,
+    BaseWalletStatisticAllRepository,
 ):
     model_class = WalletStatisticAll
     entity_class = WalletStatisticAllEntity
 
 
 class SQLAlchemyWalletStatisticBuyPriceGt15k7dRepository(
-    SQLAlchemyGenericRepository, BaseWalletStatisticBuyPriceGt15k7dRepository
+    SQLAlchemyGenericRepository,
+    BaseWalletStatisticBuyPriceGt15k7dRepository,
 ):
     model_class = WalletStatisticBuyPriceGt15k7d
     entity_class = WalletStatisticBuyPriceGt15k7dEntity
 
 
 class SQLAlchemyWalletStatisticBuyPriceGt15k30dRepository(
-    SQLAlchemyGenericRepository, BaseWalletStatisticBuyPriceGt15k30dRepository
+    SQLAlchemyGenericRepository,
+    BaseWalletStatisticBuyPriceGt15k30dRepository,
 ):
     model_class = WalletStatisticBuyPriceGt15k30d
     entity_class = WalletStatisticBuyPriceGt15k30dEntity
 
 
 class SQLAlchemyWalletStatisticBuyPriceGt15kAllRepository(
-    SQLAlchemyGenericRepository, BaseWalletStatisticBuyPriceGt15kAllRepository
+    SQLAlchemyGenericRepository,
+    BaseWalletStatisticBuyPriceGt15kAllRepository,
 ):
     model_class = WalletStatisticBuyPriceGt15kAll
     entity_class = WalletStatisticBuyPriceGt15kAllEntity
 
 
 class SQLAlchemyWalletTokenRepository(
-    SQLAlchemyGenericRepository, BaseWalletTokenRepository
+    SQLAlchemyGenericRepository,
+    BaseWalletTokenRepository,
 ):
     model_class = WalletToken
     entity_class = WalletTokenEntity
 
 
-class SQLAlchemyWalletRepository(SQLAlchemyGenericRepository, BaseWalletRepository):
+class SQLAlchemyWalletRepository(
+    SQLAlchemyGenericRepository,
+    BaseWalletRepository,
+):
     model_class = Wallet
     entity_class = WalletEntity
 
@@ -110,9 +123,7 @@ class SQLAlchemyWalletRepository(SQLAlchemyGenericRepository, BaseWalletReposito
         result = await self._session.execute(stmt)
         return result.scalars().first()
 
-    async def get_by_address_with_details_and_stats(
-        self, address: str
-    ) -> WalletEntity | None:
+    async def get_by_address_with_details_and_stats(self, address: str) -> WalletEntity | None:
         stmt = (
             select(Wallet)
             .where(Wallet.address == address)

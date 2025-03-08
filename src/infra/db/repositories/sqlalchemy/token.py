@@ -4,13 +4,24 @@ from src.application.interfaces.repositories.token import (
     BaseTokenPriceRepository,
     BaseTokenRepository,
 )
-from src.domain.entities.token import TokenEntity, TokenPriceEntity
-from src.infra.db.models.sqlalchemy.token import Token, TokenPrice
+from src.domain.entities.token import (
+    TokenEntity,
+    TokenPriceEntity,
+)
+from src.infra.db.models.sqlalchemy.token import (
+    Token,
+    TokenPrice,
+)
 
-from .generic_repository import SQLAlchemyGenericRepository
+from .generic_repository import (
+    SQLAlchemyGenericRepository,
+)
 
 
-class SQLAlchemyTokenRepository(SQLAlchemyGenericRepository, BaseTokenRepository):
+class SQLAlchemyTokenRepository(
+    SQLAlchemyGenericRepository,
+    BaseTokenRepository,
+):
     model_class = Token
     entity_class = TokenEntity
 
@@ -22,7 +33,8 @@ class SQLAlchemyTokenRepository(SQLAlchemyGenericRepository, BaseTokenRepository
 
 
 class SQLAlchemyTokenPriceRepository(
-    SQLAlchemyGenericRepository, BaseTokenPriceRepository
+    SQLAlchemyGenericRepository,
+    BaseTokenPriceRepository,
 ):
     model_class = TokenPrice
     entity_class = TokenPriceEntity

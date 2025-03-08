@@ -5,7 +5,9 @@ from typing import List, Optional
 from fastapi import Query
 from pydantic import BaseModel, Field
 
-from src.application.common.dto import PaginationResult
+from src.application.common.dto import (
+    PaginationResult,
+)
 from src.application.token.dto import TokenDTO
 
 
@@ -36,11 +38,17 @@ class WalletActivityPageDTO(WalletActivitiesDTO, PaginationResult):
 class GetWalletActivitiesFilters(BaseModel):
     token__address: Optional[str] = Field(Query(None, description="Адрес токена"))
     event_type__in: Optional[List[str]] = Field(
-        Query(None, description="Тип свапа - покупка\продажа")
+        Query(
+            None,
+            description="Тип свапа - покупка\продажа",
+        )
     )
     created_at__gte: Optional[datetime] = Field(None, description="Дата создания >=")
     created_at__lte: Optional[datetime] = Field(None, description="Дата создания <=")
     cost_usd__gte: Optional[float] = Field(None, description="Суммма свапа в USD >=")
     cost_usd__lte: Optional[float] = Field(
-        Query(None, description="Суммма свапа в USD <=")
+        Query(
+            None,
+            description="Суммма свапа в USD <=",
+        )
     )

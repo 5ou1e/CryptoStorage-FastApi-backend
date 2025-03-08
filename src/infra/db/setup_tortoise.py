@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from tortoise import Tortoise
-from tortoise.contrib.fastapi import register_tortoise
+from tortoise.contrib.fastapi import (
+    register_tortoise,
+)
 
 from src.settings import config
 
@@ -8,7 +10,10 @@ TORTOISE_ORM = {
     "connections": {"default": config.db.url_tortoise},
     "apps": {
         "models": {
-            "models": ["app.models", "aerich.models"],
+            "models": [
+                "app.models",
+                "aerich.models",
+            ],
             "default_connection": "default",
         },
     },

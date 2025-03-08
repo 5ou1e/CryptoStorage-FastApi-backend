@@ -6,7 +6,7 @@ from src.settings import config
 router = APIRouter()
 
 
-# Редирект с главной страницы на /docs
 @router.get("/", include_in_schema=False)
 async def root() -> RedirectResponse:
+    # Редирект с главной страницы на /docs
     return RedirectResponse(url=f"{config.api.prefix}/docs")

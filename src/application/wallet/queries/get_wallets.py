@@ -1,6 +1,10 @@
 from src.application.common.dto import Pagination
-from src.application.common.utils import create_paginated_response
-from src.application.interfaces.repositories.wallet import BaseWalletRepository
+from src.application.common.utils import (
+    create_paginated_response,
+)
+from src.application.interfaces.repositories.wallet import (
+    BaseWalletRepository,
+)
 from src.application.wallet.dto import (
     GetWalletsFilters,
     WalletDetailedDTO,
@@ -9,7 +13,10 @@ from src.application.wallet.dto import (
 
 
 class GetWalletsHandler:
-    def __init__(self, wallet_repository: BaseWalletRepository) -> None:
+    def __init__(
+        self,
+        wallet_repository: BaseWalletRepository,
+    ) -> None:
         self._wallet_repository = wallet_repository
 
     async def __call__(
@@ -17,14 +24,10 @@ class GetWalletsHandler:
         pagination: Pagination,
         filters: GetWalletsFilters,
     ) -> WalletsPageDTO:
-        filter_by = filters.model_dump(exclude_none=True)
         wallets = await self._wallet_repository.get_page(
-            page=pagination.page,
-            per_page=pagination.per_page,
+            page=pagination.page, page_size=pagination.page_size, filters=filters
         )
-        total_count = await self._wallet_repository.get_count(
-            # filter_by=filter_by
-        )
+        total_count = await self._wallet_repository.get_count(filters=filters)
         wallets_response = [WalletDetailedDTO.from_orm(wallet) for wallet in wallets]
         return create_paginated_response(
             data=wallets_response,

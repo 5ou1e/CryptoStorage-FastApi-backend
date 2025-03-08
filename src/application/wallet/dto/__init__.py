@@ -17,5 +17,13 @@ from .wallet_related_wallet import (
     SimilarWalletDTO,
     WalletRelatedWalletsDTO,
 )
-from .wallet_stats import WalletStats7dDTO, WalletStats30dDTO, WalletStatsAllDTO
-from .wallet_token import GetWalletTokensFilters, WalletTokenDTO, WalletTokensPageDTO
+from .wallet_stats import (
+    WalletStats7dDTO,
+    WalletStats30dDTO,
+    WalletStatsAllDTO,
+)
+from .wallet_token import (
+    GetWalletTokensFilters,
+    WalletTokenDTO,
+    WalletTokensPageDTO,
+)

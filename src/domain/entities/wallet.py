@@ -6,12 +6,18 @@ from uuid import UUID
 
 from mashumaro import DataClassDictMixin
 
-from src.domain.entities.base_entity import BaseEntity, TimestampMixinEntity
-
+from src.domain.entities.base_entity import (
+    BaseEntity,
+    TimestampMixinEntity,
+)
 
 
 @dataclass
-class WalletEntity(DataClassDictMixin, BaseEntity, TimestampMixinEntity):
+class WalletEntity(
+    DataClassDictMixin,
+    BaseEntity,
+    TimestampMixinEntity,
+):
     id: Optional[UUID] = None
     address: Optional[str] = None
     last_stats_check: Optional[datetime] = None
@@ -24,7 +30,7 @@ class WalletEntity(DataClassDictMixin, BaseEntity, TimestampMixinEntity):
     tokens: Optional[list["WalletTokenEntity"]] = field(default_factory=list)
 
     @property
-    def need_update_stats_all(self) -> bool:
+    def is_need_update_stats_all(self) -> bool:
         """Неоходимо ли обновлять статистику за все время"""
         # Обновляем статистику за все время, только если есть неучтенная активность
         # Прибавляем 10 минут, чтобы исключить случай, когда появится новая активность в момент апдейта
@@ -32,9 +38,8 @@ class WalletEntity(DataClassDictMixin, BaseEntity, TimestampMixinEntity):
         # В таком случае статистика посчитается еще 1 раз, но это не страшно
         if self.last_stats_check is None or self.last_activity_timestamp is None:
             return True
-        return self.last_stats_check < self.last_activity_timestamp + timedelta(
-            minutes=10
-        )
+        return self.last_stats_check < self.last_activity_timestamp + timedelta(minutes=10)
+
 
 @dataclass
 class WalletDetailEntity(BaseEntity, TimestampMixinEntity):

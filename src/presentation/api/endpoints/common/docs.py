@@ -4,7 +4,11 @@ from fastapi.responses import HTMLResponse
 router = APIRouter()
 
 
-@router.get("/rapidoc", include_in_schema=False, response_class=HTMLResponse)
+@router.get(
+    "/rapidoc",
+    include_in_schema=False,
+    response_class=HTMLResponse,
+)
 async def get_rapidoc():
     html_content = """
         <!DOCTYPE html>
@@ -21,7 +25,11 @@ async def get_rapidoc():
     return HTMLResponse(content=html_content)
 
 
-@router.get("/elements", include_in_schema=False, response_class=HTMLResponse)
+@router.get(
+    "/elements",
+    include_in_schema=False,
+    response_class=HTMLResponse,
+)
 async def get_elements_docs():
     html_content = """
         <!doctype html>

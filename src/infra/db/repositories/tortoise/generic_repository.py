@@ -1,16 +1,30 @@
 import logging
 from dataclasses import asdict
-from typing import Any, Dict, Iterable, List, Optional, Sequence, TypeVar
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    TypeVar,
+)
 
 from tortoise import BaseDBAsyncClient, Tortoise
 from tortoise.models import Model
 from tortoise.queryset import QuerySet
 from tortoise.transactions import in_transaction
 
-from src.application.interfaces.repositories import BaseGenericRepository
-from src.domain.entities.base_entity import BaseEntity
+from src.application.interfaces.repositories import (
+    BaseGenericRepository,
+)
+from src.domain.entities.base_entity import (
+    BaseEntity,
+)
 from src.infra.db import queries
-from src.infra.db.utils import bulk_update_records_query
+from src.infra.db.utils import (
+    bulk_update_records_query,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -101,14 +115,14 @@ class TortoiseGenericRepository(BaseGenericRepository[BaseEntity]):
     async def get_page(
         self,
         page: int = 1,
-        per_page: int = 10,
+        page_size: int = 10,
         filter_by: Optional[dict] = None,
         order_by: Optional[list] = None,
         prefetch: Optional[list] = None,
         select_related: Optional[list] = None,
     ) -> list:
-        limit = per_page
-        offset = (max(page, 1) - 1) * per_page
+        limit = page_size
+        offset = (max(page, 1) - 1) * page_size
         return await self.get_list(
             limit=limit,
             offset=offset,
@@ -132,9 +146,7 @@ class TortoiseGenericRepository(BaseGenericRepository[BaseEntity]):
             await conn.execute_query(queries.CREATE_FUNC_COUNT_ESTIMATE)
             _query = query.sql(params_inline=True)
             safe_query = _query.replace("'", "''")  # Экранируем одиночные кавычки
-            row = await conn.execute_query(
-                queries.GET_COUNT_ESTIMATE_WITH_FUNC.format(query=safe_query)
-            )
+            row = await conn.execute_query(queries.GET_COUNT_ESTIMATE_WITH_FUNC.format(query=safe_query))
             return int(row[1][0]["count_estimate"]) if row else 0
 
     async def _count_estimate_full(self) -> int:
@@ -159,9 +171,7 @@ class TortoiseGenericRepository(BaseGenericRepository[BaseEntity]):
                 limit = 50000
                 # query = self.model_class.filter(**filter_by)
                 # count = await query.limit(limit).count() # Какого-то хрена она делает SELECT без лимита
-                subquery = (
-                    self.model_class.filter(**filter_by).limit(limit).values("id")
-                )
+                subquery = self.model_class.filter(**filter_by).limit(limit).values("id")
                 count = await self.model_class.filter(id__in=Subquery(subquery)).count()
                 # count = len(await query.limit(limit).all())
                 # count=1001

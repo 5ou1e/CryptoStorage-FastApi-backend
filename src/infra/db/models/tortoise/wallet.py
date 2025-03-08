@@ -1,10 +1,20 @@
 import uuid
 from typing import Optional, Set
 
-from tortoise import BackwardOneToOneRelation, Model, fields
-from tortoise.fields.relational import BackwardOneToOneRelation
+from tortoise import (
+    BackwardOneToOneRelation,
+    Model,
+    fields,
+)
+from tortoise.fields.relational import (
+    BackwardOneToOneRelation,
+)
 
-from .common import IntIDMixin, TimestampsMixin, UUIDIDMixin
+from .common import (
+    IntIDMixin,
+    TimestampsMixin,
+    UUIDIDMixin,
+)
 from .utils import MyDecimalField
 
 
@@ -12,7 +22,8 @@ class Wallet(Model, UUIDIDMixin, TimestampsMixin):
     address = fields.CharField(max_length=90, unique=True)
     last_stats_check = fields.DatetimeField(null=True, blank=True)
     last_activity_timestamp = fields.DatetimeField(
-        null=True, description="Время последней Defi-активности"
+        null=True,
+        description="Время последней Defi-активности",
     )
     # first_activity_timestamp = fields.DatetimeField(null=True, description='Время первой Defi-активности')
     details: BackwardOneToOneRelation["WalletDetail"]
@@ -37,16 +48,25 @@ class Wallet(Model, UUIDIDMixin, TimestampsMixin):
 
 class WalletDetail(Model, IntIDMixin, TimestampsMixin):
     wallet = fields.OneToOneField(
-        "models.Wallet", related_name="details", on_delete=fields.CASCADE
+        "models.Wallet",
+        related_name="details",
+        on_delete=fields.CASCADE,
     )
     sol_balance = MyDecimalField(
-        max_digits=50, decimal_places=20, null=True, blank=True
+        max_digits=50,
+        decimal_places=20,
+        null=True,
+        blank=True,
     )
     is_scammer = fields.BooleanField(
-        db_index=True, default=False, verbose_name="Скамерский кошелек"
+        db_index=True,
+        default=False,
+        verbose_name="Скамерский кошелек",
     )
     is_bot = fields.BooleanField(
-        db_index=True, default=False, verbose_name="Арбитраж-бот"
+        db_index=True,
+        default=False,
+        verbose_name="Арбитраж-бот",
     )
 
     class Meta:
@@ -64,16 +84,30 @@ class AbstractWalletStatistic(Model, IntIDMixin, TimestampsMixin):
         on_delete=fields.CASCADE,
     )
     winrate = MyDecimalField(
-        max_digits=40, decimal_places=5, null=True, blank=True, index=True
+        max_digits=40,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        index=True,
     )
     total_token_buy_amount_usd = MyDecimalField(
-        max_digits=50, decimal_places=20, null=True, blank=True
+        max_digits=50,
+        decimal_places=20,
+        null=True,
+        blank=True,
     )
     total_token_sell_amount_usd = MyDecimalField(
-        max_digits=50, decimal_places=20, null=True, blank=True
+        max_digits=50,
+        decimal_places=20,
+        null=True,
+        blank=True,
     )
     total_profit_usd = MyDecimalField(
-        max_digits=50, decimal_places=20, null=True, blank=True, index=True
+        max_digits=50,
+        decimal_places=20,
+        null=True,
+        blank=True,
+        index=True,
     )
     total_profit_multiplier = fields.FloatField(null=True, blank=True, index=True)
     total_token = fields.IntField(null=True, blank=True, index=True)
@@ -85,24 +119,40 @@ class AbstractWalletStatistic(Model, IntIDMixin, TimestampsMixin):
     token_buy_without_sell = fields.IntField(null=True, blank=True)
     token_with_sell_amount_gt_buy_amount = fields.IntField(null=True, blank=True)
     token_avg_buy_amount = MyDecimalField(
-        max_digits=50, decimal_places=20, null=True, blank=True, index=True
+        max_digits=50,
+        decimal_places=20,
+        null=True,
+        blank=True,
+        index=True,
     )
     token_median_buy_amount = MyDecimalField(
-        max_digits=50, decimal_places=20, null=True, blank=True
+        max_digits=50,
+        decimal_places=20,
+        null=True,
+        blank=True,
     )
     token_first_buy_avg_price_usd = MyDecimalField(
-        max_digits=50, decimal_places=20, null=True, blank=True
+        max_digits=50,
+        decimal_places=20,
+        null=True,
+        blank=True,
     )
     token_first_buy_median_price_usd = MyDecimalField(
-        max_digits=50, decimal_places=20, null=True, blank=True, index=True
+        max_digits=50,
+        decimal_places=20,
+        null=True,
+        blank=True,
+        index=True,
     )
     token_avg_profit_usd = MyDecimalField(
-        max_digits=50, decimal_places=20, null=True, blank=True, index=True
+        max_digits=50,
+        decimal_places=20,
+        null=True,
+        blank=True,
+        index=True,
     )
     token_buy_sell_duration_avg = fields.BigIntField(null=True, blank=True)
-    token_buy_sell_duration_median = fields.BigIntField(
-        null=True, blank=True, index=True
-    )
+    token_buy_sell_duration_median = fields.BigIntField(null=True, blank=True, index=True)
     first_transaction_timestamp = fields.BigIntField(null=True, blank=True)
     pnl_lt_minus_dot5_num = fields.IntField(null=True, blank=True)
     pnl_minus_dot5_0x_num = fields.IntField(null=True, blank=True)
@@ -118,9 +168,7 @@ class AbstractWalletStatistic(Model, IntIDMixin, TimestampsMixin):
     @property
     def total_buys_and_sales_count(self) -> int:
         return (
-            self.total_token_buys + self.total_token_sales
-            if (self.total_token_buys and self.total_token_sales)
-            else 0
+            self.total_token_buys + self.total_token_sales if (self.total_token_buys and self.total_token_sales) else 0
         )
 
     total_swaps_from_arbitrage_swap_events: Optional[int] = 0
@@ -132,7 +180,9 @@ class AbstractWalletStatistic(Model, IntIDMixin, TimestampsMixin):
 
 class WalletStatistic7d(AbstractWalletStatistic):
     wallet = fields.OneToOneField(
-        "models.Wallet", related_name="stats_7d", on_delete=fields.CASCADE
+        "models.Wallet",
+        related_name="stats_7d",
+        on_delete=fields.CASCADE,
     )
 
     class Meta:
@@ -144,7 +194,9 @@ class WalletStatistic7d(AbstractWalletStatistic):
 
 class WalletStatistic30d(AbstractWalletStatistic):
     wallet = fields.OneToOneField(
-        "models.Wallet", related_name="stats_30d", on_delete=fields.CASCADE
+        "models.Wallet",
+        related_name="stats_30d",
+        on_delete=fields.CASCADE,
     )
 
     class Meta:
@@ -156,7 +208,9 @@ class WalletStatistic30d(AbstractWalletStatistic):
 
 class WalletStatisticAll(AbstractWalletStatistic):
     wallet = fields.OneToOneField(
-        "models.Wallet", related_name="stats_all", on_delete=fields.CASCADE
+        "models.Wallet",
+        related_name="stats_all",
+        on_delete=fields.CASCADE,
     )
 
     class Meta:
@@ -251,25 +305,29 @@ class WalletToken(Model, UUIDIDMixin, TimestampsMixin):
         null=True,
         description="Цена токена в момент 1-й продажи",
     )
-    first_sell_timestamp = fields.BigIntField(
-        null=True, description="Время 1-й продажи"
-    )
+    first_sell_timestamp = fields.BigIntField(null=True, description="Время 1-й продажи")
     last_activity_timestamp = fields.BigIntField(
-        null=True, description="Последняя активность"
+        null=True,
+        description="Последняя активность",
     )
     total_profit_usd = MyDecimalField(
-        default=0, max_digits=40, decimal_places=20, description="Общий профит в USD"
+        default=0,
+        max_digits=40,
+        decimal_places=20,
+        description="Общий профит в USD",
     )
     total_profit_percent = fields.FloatField(null=True, description="Общий профит %")
     first_buy_sell_duration = fields.IntField(
-        null=True, description="Холд между 1-й покупкой и продажей"
+        null=True,
+        description="Холд между 1-й покупкой и продажей",
     )
     total_swaps_from_txs_with_mt_3_swappers = fields.IntField(
         default=0,
         description="Кол-во свапов являющихся частью транзакций с >= 3 трейдерами",
     )
     total_swaps_from_arbitrage_swap_events = fields.IntField(
-        default=0, description="Кол-во свапов являющихся частью арбитражных транз."
+        default=0,
+        description="Кол-во свапов являющихся частью арбитражных транз.",
     )
 
     wallet = fields.ForeignKeyField(
@@ -300,7 +358,9 @@ class WalletToken(Model, UUIDIDMixin, TimestampsMixin):
 
 class TgSentWallet(Model, IntIDMixin, TimestampsMixin):
     wallet = fields.OneToOneField(
-        "models.Wallet", related_name="tg_sent", on_delete=fields.CASCADE
+        "models.Wallet",
+        related_name="tg_sent",
+        on_delete=fields.CASCADE,
     )
 
     class Meta:
