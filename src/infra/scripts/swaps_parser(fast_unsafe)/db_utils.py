@@ -34,7 +34,7 @@ from src.infra.db.repositories import (
 from .config import *
 
 
-async def get_flpside_account():
+async def get_flipside_account():
     return await FlipsideCryptoAccount.filter(is_active=True).first()
 
 

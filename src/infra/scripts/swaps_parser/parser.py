@@ -206,7 +206,7 @@ async def _process():
             if next_time > end_time:
                 next_time = end_time
 
-            flipside_account = await db_utils.get_flpside_account()
+            flipside_account = await db_utils.get_flipside_account()
             if not flipside_account:
                 logger.error(f"Нету активных аккаунтов FlipsideCrypto в БД")
                 return

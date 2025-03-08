@@ -31,7 +31,7 @@ from . import utils
 from .config import *
 
 
-async def get_flpside_account():
+async def get_flipside_account():
     return await FlipsideCryptoAccount.filter(is_active=True).first()
 
 
@@ -153,7 +153,7 @@ async def load_wallet_tokens(token_wallet_list, chunks_count: int = 5) -> list[M
 async def import_wallet_tokens(records: List[Model]):
     fields_to_update = (
         WalletToken._meta.db_fields.copy()
-    )  # Обязательно .copy(), чтобы не менять исходный set
+    )
     fields_to_update.remove("id")
     fields_to_update.remove("wallet_id")
     fields_to_update.remove("token_id")
@@ -162,5 +162,5 @@ async def import_wallet_tokens(records: List[Model]):
         records,
         ignore_conflicts=False,
         on_conflict=["wallet_id", "token_id"],
-        update_fields=fields_to_update,  # Поля для обновления
+        update_fields=fields_to_update,
     )

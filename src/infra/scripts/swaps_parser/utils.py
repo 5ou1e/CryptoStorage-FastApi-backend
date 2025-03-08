@@ -12,7 +12,6 @@ from src.infra.db.models.tortoise import (
     WalletStatistic7d,
     WalletStatistic30d,
     WalletStatisticAll,
-    WalletToken,
 )
 
 from .config import SOL_ADDRESS
@@ -121,6 +120,7 @@ def extract_and_build_objects(
     for swap in swaps:
         if not all([swap["swapper"], swap["tx_id"]]):
             continue
+
         wallet_address = swap["swapper"]
         if swap["swap_from_mint"] == SOL_ADDRESS:
             token_address = swap["swap_to_mint"]
@@ -132,10 +132,10 @@ def extract_and_build_objects(
             event_type = "sell"
             quote_amount = Decimal(str(swap["swap_to_amount"]))
             token_amount = Decimal(str(swap["swap_from_amount"]))
+
         iso_string = swap["block_timestamp"]
-        # Убираем 'Z' (если она есть) для совместимости с fromisoformat
         iso_string = iso_string.replace("Z", "+00:00")
-        # Преобразуем строку в объект datetime
+
         swap_datetime = datetime.fromisoformat(iso_string)
         swap_minute = swap_datetime.replace(second=0, microsecond=0)
 
